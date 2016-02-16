@@ -1,0 +1,20 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/insecure_connect_scan"
+        android:title="@string/insecure_connect"/>
+    <item
+        android:id="@+id/secure_connect_scan"
+        android:title="@string/secure_connect"/>
+    <item
+        android:id="@+id/monitor_start"
+        android:title="@string/start"/>
+    <item
+        android:id="@+id/monitor_cs"
+        android:title="@string/cold_smoke"/>
+    <item
+        android:id="@+id/monitor_mf"
+        android:title="@string/max_fan"/>
+    <item
+        android:id="@+id/monitor_stop"
+        android:title="@string/stop"/>
+</menu>
