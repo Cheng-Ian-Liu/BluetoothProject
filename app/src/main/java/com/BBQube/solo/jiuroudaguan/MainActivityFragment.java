@@ -594,11 +594,20 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                 .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
         // Get the BluetoothDevice object
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+
+        /*
+        [Ian] need to determine whether the device has already been connected, if so do not connect again
+        TODO: need to determine whether the device has already been connected, if so do not connect again
+            ****************************************************************************************************************************
+            * **************************************************************************************************************************
+            * **************************************************************************************************************************
+        */
+
         // Attempt to connect to the device
         mBluetoothService.connect(device, secure);
     }
 
-
+    //[Ian] here is where all the menu items are
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -613,7 +622,8 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
                 return true;
             }
-            case R.id.insecure_connect_scan: {
+            // [Ian] deleted insecure option in menu_main.xml
+            /*case R.id.insecure_connect_scan: {
                 Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
 
@@ -622,9 +632,10 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                 startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_INSECURE);
 
                 return true;
-            }
-            case R.id.monitor_start: {
+            }*/
 
+            // this corresponds to Set Temp menu option being clicked
+            case R.id.monitor_start: {
 
                 showTemperatureDialog();
                 // start

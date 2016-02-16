@@ -194,7 +194,7 @@ public class DeviceListActivity extends Activity {
             Log.d(TAG, "!!!!!!!!!!!!   !!!!!!!!!!!!!!!!!!");
 
             // Set result and finish this Activity
-            setResult(Activity.RESULT_OK, intent);
+            setResult(Activity.RESULT_OK, intent); // will invoke MainActivityFragment onActivityResult()
 
             // [Ian] changed the toast message to connecting...
             Toast.makeText(getBaseContext(), "Connecting BBQube Device...", Toast.LENGTH_LONG).show();

@@ -3,7 +3,7 @@
     <string name="action_settings">Settings</string>
 
     <!-- Options Menu -->
-    <string name="secure_connect">Connect a device - Secure</string>
+    <string name="secure_connect">Connect to a BBQube device</string>
     <string name="insecure_connect">Connect a device - Insecure</string>
     <string name="start">Set Temp</string>
     <string name="cold_smoke">Cold Smoke</string>

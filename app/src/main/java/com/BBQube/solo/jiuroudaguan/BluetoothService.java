@@ -130,6 +130,7 @@ public class BluetoothService {
      */
     public synchronized void connect(BluetoothDevice device, boolean secure) {
         Log.d(TAG, "connect to: " + device);
+        Log.d(TAG, "current mSate is: " + Integer.toString(mState));
 
         // Cancel any thread attempting to make a connection
         if (mState == STATE_CONNECTING) {
@@ -140,10 +141,14 @@ public class BluetoothService {
         }
 
         // Cancel any thread currently running a connection
-        if (mConnectedThread != null) {
-            mConnectedThread.cancel();
-            mConnectedThread = null;
-        }
+        // [Ian] need to prevent from double connecting the same device
+        //if (mState == STATE_CONNECTED){
+                if (mConnectedThread != null) {
+                mConnectedThread.cancel();
+                mConnectedThread = null;
+                Log.d(TAG, "canceled a current connection with device: " + device);
+            }
+       // }
 
         // Start the thread to connect with the given device
         mConnectThread = new ConnectThread(device, secure);
@@ -160,6 +165,7 @@ public class BluetoothService {
     public synchronized void connected(BluetoothSocket socket, BluetoothDevice
             device, final String socketType) {
         Log.d(TAG, "connected, Socket Type:" + socketType);
+        Log.d(TAG, "current mState is: " + Integer.toString(mState));
 
         // Cancel the thread that completed the connection
         if (mConnectThread != null) {
@@ -187,6 +193,8 @@ public class BluetoothService {
         mConnectedThread = new ConnectedThread(socket, socketType);
         mConnectedThread.start();
 
+        setState(STATE_CONNECTED);
+
         // Send the name of the connected device back to the UI Activity
         Message msg = mHandler.obtainMessage(Constants.MESSAGE_DEVICE_NAME);
         Bundle bundle = new Bundle();
@@ -194,7 +202,6 @@ public class BluetoothService {
         msg.setData(bundle);
         mHandler.sendMessage(msg);
 
-        setState(STATE_CONNECTED);
     }
 
     /**
@@ -397,6 +404,7 @@ public class BluetoothService {
             mmSocket = tmp;
         }
 
+        // get called when mConnectThread.start()
         public void run() {
             Log.i(TAG, "BEGIN mConnectThread SocketType:" + mSocketType);
             setName("ConnectThread" + mSocketType);
@@ -417,6 +425,7 @@ public class BluetoothService {
                     Log.e(TAG, "unable to close() " + mSocketType +
                             " socket during connection failure", e2);
                 }
+                Log.e(TAG, "unable to connect");
                 Log.e(TAG, e.getMessage());
                 connectionFailed();
                 return;
@@ -469,10 +478,6 @@ public class BluetoothService {
 
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
-            // [Ian] also add a connection notice to the UI
-            // ToDo: add a toast to let user know it is connected. Challenge is how to Toast inside of a Thread?
-            //[Ian] change ends
-
 
             byte[] buffer = new byte[1024];
             int bytes;
