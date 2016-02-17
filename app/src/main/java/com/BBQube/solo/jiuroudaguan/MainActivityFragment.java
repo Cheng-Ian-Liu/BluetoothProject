@@ -153,6 +153,9 @@ class ByteQueue {
 public class MainActivityFragment extends Fragment implements OnChartValueSelectedListener, TemperatureDialog.TemperatureDialogListener{
 
 
+    // [Ian] add a flag to check if a connection is already there
+    public static boolean isConnectionExist = false;
+
     // chart things
     private LineChart mChart;
     protected String[] mMonths = new String[] {
@@ -461,6 +464,10 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                     switch (msg.arg1) {
                         case BluetoothService.STATE_CONNECTED:
                             setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
+
+                            // [Ian] set the flag so the user won't be able to connect again while there is an existing connection
+                            isConnectionExist = true;
+
                             mConversationArrayAdapter.clear();
                             break;
                         case BluetoothService.STATE_CONNECTING:
@@ -469,6 +476,10 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                         case BluetoothService.STATE_LISTEN:
                         case BluetoothService.STATE_NONE:
                             setStatus(R.string.title_not_connected);
+
+                            // [Ian] reset the flag so the user can connect again
+                            isConnectionExist = false;
+
                             break;
                     }
                     break;
@@ -568,7 +579,6 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                 // When the request to enable Bluetooth returns
                 if (resultCode == Activity.RESULT_OK) {
                     // Bluetooth is now enabled, so set up a session
-
                     Log.d(TAG, "BT enabled!!!!!");
                     setupBluetooth();
                 } else {
@@ -595,16 +605,11 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         // Get the BluetoothDevice object
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
 
-        /*
-        [Ian] need to determine whether the device has already been connected, if so do not connect again
-        TODO: need to determine whether the device has already been connected, if so do not connect again
-            ****************************************************************************************************************************
-            * **************************************************************************************************************************
-            * **************************************************************************************************************************
-        */
-
         // Attempt to connect to the device
+        FragmentActivity activity = getActivity();
+        Toast.makeText(activity, "Connecting BBQube device...", Toast.LENGTH_SHORT).show();
         mBluetoothService.connect(device, secure);
+
     }
 
     //[Ian] here is where all the menu items are
@@ -613,12 +618,24 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
         switch (item.getItemId()) {
             case R.id.secure_connect_scan: {
-                Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+                        /*
+                        [Ian] need to determine whether the device has already been connected, if so do not connect again
+                        TODO: need to determine whether the device has already been connected, if so do not connect again
+                         */
 
-                // Launch the DeviceListActivity to see devices and do scan
-                Intent serverIntent = new Intent(getActivity(), DeviceListActivity.class);
-                startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_SECURE);
+                if (isConnectionExist == false) {
+
+                    Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+
+                    // Launch the DeviceListActivity to see devices and do scan
+                    Intent serverIntent = new Intent(getActivity(), DeviceListActivity.class);
+                    startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_SECURE);
+                } else{
+                    Log.d(TAG, "try to connect while there is already a connection");
+                    FragmentActivity activity = getActivity();
+                    Toast.makeText(activity, "There is an existing connection, you need to disconnect it first", Toast.LENGTH_SHORT).show();
+                }
 
                 return true;
             }
@@ -755,8 +772,10 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
     @Override
     public void onSetTemperatureDialog(String temp) {
-        //Toast.makeText(getActivity(),"Here is the temperature value "+temp,Toast.LENGTH_SHORT).show();
-        sendMessage("225");
+        // [Ian] fixed the bug of keep setting 225
+        Toast.makeText(getActivity(),"The temperature setting value is: " + temp,Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "temp set is: "  + temp);
+        sendMessage(temp);
         start = Boolean.TRUE;
     }
 }
