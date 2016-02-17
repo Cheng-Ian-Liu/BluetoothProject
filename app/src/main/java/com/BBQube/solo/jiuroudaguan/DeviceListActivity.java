@@ -37,6 +37,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Method;
 import java.util.Set;
 
 /*import com.example.android.common.logger.Log;*/
@@ -70,6 +71,7 @@ public class DeviceListActivity extends Activity {
      */
     private ArrayAdapter<String> mNewDevicesArrayAdapter;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,12 +101,14 @@ public class DeviceListActivity extends Activity {
         // Find and set up the ListView for paired devices
         ListView pairedListView = (ListView) findViewById(R.id.paired_devices);
         pairedListView.setAdapter(pairedDevicesArrayAdapter);
-        pairedListView.setOnItemClickListener(mDeviceClickListener);
+        pairedListView.setOnItemClickListener(mPairedDeviceClickListener);
 
         // Find and set up the ListView for newly discovered devices
         ListView newDevicesListView = (ListView) findViewById(R.id.new_devices);
         newDevicesListView.setAdapter(mNewDevicesArrayAdapter);
-        newDevicesListView.setOnItemClickListener(mDeviceClickListener);
+        // [Ian] changed the click listener for unpaired devices
+        //newDevicesListView.setOnItemClickListener(mDeviceClickListener);
+        newDevicesListView.setOnItemClickListener(mNewUnPairedDeviceClickListener);
 
         // Register for broadcasts when a device is discovered
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -113,6 +117,10 @@ public class DeviceListActivity extends Activity {
         // Register for broadcasts when discovery has finished
         filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         this.registerReceiver(mReceiver, filter);
+
+        //[Ian] register for broadcast when a new device try to pair for the first time
+        filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        this.registerReceiver(mPairReceiver, filter);
 
         // Get the local Bluetooth adapter
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -147,6 +155,7 @@ public class DeviceListActivity extends Activity {
 
         // Unregister broadcast listeners
         this.unregisterReceiver(mReceiver);
+        this.unregisterReceiver(mPairReceiver);
     }
 
     /**
@@ -172,9 +181,9 @@ public class DeviceListActivity extends Activity {
     }
 
     /**
-     * The on-click listener for all devices in the ListViews
+     * The on-click listener for paired devices in the ListViews
      */
-    private AdapterView.OnItemClickListener mDeviceClickListener
+    private AdapterView.OnItemClickListener mPairedDeviceClickListener
             = new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {
             // Cancel discovery because it's costly and we're about to connect
@@ -188,7 +197,7 @@ public class DeviceListActivity extends Activity {
             Intent intent = new Intent();
             intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
 
-            Log.d(TAG, "!!!!!!!!!!!!   !!!!!!!!!!!!!!!!!!");
+            Log.d(TAG, "!!!!!!!!!!!! Old Paired Device !!!!!!!!!!!!!!!!!!");
             Log.d(TAG, address);
             Log.d(TAG, EXTRA_DEVICE_ADDRESS);
             Log.d(TAG, "!!!!!!!!!!!!   !!!!!!!!!!!!!!!!!!");
@@ -201,6 +210,44 @@ public class DeviceListActivity extends Activity {
             finish();
         }
     };
+
+    /** [Ian] added a new listener for un-paired devices
+     * The on-click listener for new un-paired devices in the ListViews
+     */
+    private AdapterView.OnItemClickListener mNewUnPairedDeviceClickListener
+            = new AdapterView.OnItemClickListener() {
+        public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {
+            // Cancel discovery because it's costly and we're about to connect
+            mBtAdapter.cancelDiscovery();
+
+            // Get the device MAC address, which is the last 17 chars in the View
+            String info = ((TextView) v).getText().toString();
+            String address = info.substring(info.length() - 17);
+
+            // Create the result Intent and include the MAC address
+            Intent intent = new Intent();
+            intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
+
+            Log.d(TAG, "!!!!!!!!!!!! New Un-Paired Device  !!!!!!!!!!!!!!!!!!");
+            Log.d(TAG, address);
+            Log.d(TAG, EXTRA_DEVICE_ADDRESS);
+            Log.d(TAG, "!!!!!!!!!!!! Now trying to pair for the first time  !!!!!!!!!!!!!!!!!!");
+
+            // Get the BluetoothDevice object
+            BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
+            //TODO: fix the pairing interface within APP
+            // pairDevice(device);
+
+            // Set result and finish this Activity,
+            //setResult(Activity.RESULT_OK, intent); // will invoke MainActivityFragment onActivityResult()
+
+            // [Ian] changed the toast to happen in MainActivityFragment connectDevice()
+            Toast.makeText(getBaseContext(), "Need to pair the device first, rightnow done outside of the app, TODO: pair within APP", Toast.LENGTH_LONG).show();
+            finish();
+        }
+    };
+
+
 
     /**
      * The BroadcastReceiver that listens for discovered devices and changes the title when
@@ -233,7 +280,41 @@ public class DeviceListActivity extends Activity {
                     mNewDevicesArrayAdapter.add(noDevices);
                 }
             }
+
         }
     };
+
+    // [Ian] add a new receiver for new device pairing request (reference code: http://www.londatiga.net/it/programming/android/how-to-programmatically-pair-or-unpair-android-bluetooth-device/)
+    private final BroadcastReceiver mPairReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
+                final int state        = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
+                final int prevState    = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
+
+                if (state == BluetoothDevice.BOND_BONDED && prevState == BluetoothDevice.BOND_BONDING) {
+                    Toast.makeText(getBaseContext(), "Just Paired", Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, "New Device Just Paired ");
+                } else if (state == BluetoothDevice.BOND_NONE && prevState == BluetoothDevice.BOND_BONDED){
+                    Toast.makeText(getBaseContext(), "Un-Paired", Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, "New Device Not Paired ");
+                }
+            }
+        }
+    };
+
+    //[Ian] added
+    private void pairDevice(BluetoothDevice device) {
+        try {
+            Method method = device.getClass().getMethod("createBond", (Class[]) null);
+            method.invoke(device, (Object[]) null);
+            Log.d(TAG, "Invoked Pairing Process ");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
 }
