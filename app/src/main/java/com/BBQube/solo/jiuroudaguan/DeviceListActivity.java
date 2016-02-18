@@ -236,13 +236,17 @@ public class DeviceListActivity extends Activity {
             // Get the BluetoothDevice object
             BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
             //TODO: fix the pairing interface within APP
-            // pairDevice(device);
+
+            int state = device.getBondState();
+            Log.d(TAG, "current device name is: " + device.getName());
+            Log.d(TAG, "current device bond state is: " + Integer.toString(state));
+            pairDevice(device);
 
             // Set result and finish this Activity,
             //setResult(Activity.RESULT_OK, intent); // will invoke MainActivityFragment onActivityResult()
 
             // [Ian] changed the toast to happen in MainActivityFragment connectDevice()
-            Toast.makeText(getBaseContext(), "Need to pair the device first, rightnow done outside of the app, TODO: pair within APP", Toast.LENGTH_LONG).show();
+            Toast.makeText(getBaseContext(), "You should have just received a pairing request, see pairing notification and enter PIN 1234 ", Toast.LENGTH_LONG).show();
             finish();
         }
     };
@@ -307,11 +311,12 @@ public class DeviceListActivity extends Activity {
     //[Ian] added
     private void pairDevice(BluetoothDevice device) {
         try {
-            Method method = device.getClass().getMethod("createBond", (Class[]) null);
-            method.invoke(device, (Object[]) null);
-            Log.d(TAG, "Invoked Pairing Process ");
+            Log.d(TAG, "Start Pairing... with: " + device.getName());
+            Method m = device.getClass().getMethod("createBond", (Class[]) null);
+            m.invoke(device, (Object[]) null);
+            Log.d(TAG, "Pairing finished.");
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
     }
 

@@ -4,8 +4,11 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
@@ -147,6 +150,8 @@ class ByteQueue {
 }
 
 
+
+
 /**
  * A placeholder fragment containing a simple view.
  */
@@ -155,6 +160,34 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
     // [Ian] add a flag to check if a connection is already there
     public static boolean isConnectionExist = false;
+
+
+
+    // [Ian] add a new receiver for new device is successfully paired(reference code: http://www.londatiga.net/it/programming/android/how-to-programmatically-pair-or-unpair-android-bluetooth-device/)
+    private final BroadcastReceiver mPairReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
+                final int state        = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
+                final int prevState    = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
+
+                if (state == BluetoothDevice.BOND_BONDED && prevState == BluetoothDevice.BOND_BONDING) {
+                    Toast.makeText(getActivity(), "A New BBQuebe Device Just Paired, Now Click It To Connect", Toast.LENGTH_LONG).show();
+                    Log.d(TAG, "New Device Just Paired ");
+
+                    // [Ian] now jump to DeviceListActivity to display device list for user to connect
+                    Intent serverIntent = new Intent(getActivity(), DeviceListActivity.class);
+                    startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_SECURE);
+
+                } else if (state == BluetoothDevice.BOND_NONE && prevState == BluetoothDevice.BOND_BONDED){
+                    Toast.makeText(getActivity(), "Bluetooth Device Un-Paired", Toast.LENGTH_LONG).show();
+                    Log.d(TAG, "New Device Not Paired ");
+                }
+            }
+        }
+    };
+
 
     // chart things
     private LineChart mChart;
@@ -240,7 +273,10 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         getActivity().getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-
+        // [Ian] add a bluetooth paired listener
+        // [Ian] register for broadcast when a new device try to pair for the first time
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        getActivity().registerReceiver(mPairReceiver, filter);
     }
 
     @Override
@@ -625,6 +661,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
                 if (isConnectionExist == false) {
 
+                    // launch enable bluetooth & setup bluetooth in onActivityResult()
                     Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                     startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
 
@@ -778,5 +815,6 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         sendMessage(temp);
         start = Boolean.TRUE;
     }
+
 }
 
