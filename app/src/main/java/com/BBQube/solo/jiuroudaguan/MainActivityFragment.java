@@ -161,21 +161,51 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
     // [Ian] add a flag to check if a connection is already there
     public static boolean isConnectionExist = false;
 
+    // [Ian] add a new receiver when a new device attempts to pair for the first time, help to enter PIN programmatically without user input
+    private final BroadcastReceiver mPairingRequestReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(BluetoothDevice.ACTION_PAIRING_REQUEST)) {
+                try {
+                        BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                        // assuming pin = 1234
+                        int pin=intent.getIntExtra("android.bluetooth.device.extra.PAIRING_KEY", 1234);
+                        //the pin in case you need to accept for an specific pin
+                        Log.d(TAG, "ACTION_PAIRING_REQUEST trapped. Start Auto Pairing. PIN = " + Integer.toString(pin));
+                        byte[] pinBytes;
+                        pinBytes = (""+pin).getBytes("UTF-8");
+                        device.setPin(pinBytes);
+                        //setPairing confirmation if neeeded
+                        device.setPairingConfirmation(true);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error occurs when trying to auto pair");
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
 
 
-    // [Ian] add a new receiver for new device is successfully paired(reference code: http://www.londatiga.net/it/programming/android/how-to-programmatically-pair-or-unpair-android-bluetooth-device/)
-    private final BroadcastReceiver mPairReceiver = new BroadcastReceiver() {
+    // [Ian] add a new receiver when new device is successfully paired(reference code: http://www.londatiga.net/it/programming/android/how-to-programmatically-pair-or-unpair-android-bluetooth-device/)
+    private final BroadcastReceiver mPairingSuccessReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
             if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
                 final int state        = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
                 final int prevState    = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
-                if (state == BluetoothDevice.BOND_BONDED && prevState == BluetoothDevice.BOND_BONDING) {
-                    Toast.makeText(getActivity(), "A New BBQuebe Device Just Paired, Now Click It To Connect", Toast.LENGTH_LONG).show();
+                if (state == BluetoothDevice.BOND_BONDING && prevState == BluetoothDevice.BOND_NONE){
+                    // [Ian] since we automatically pass PIN without use manually enter the PIN, we want to dismiss the pairing request system dialog
+                    // [Ian] check this one for modifying SDK to dismiss pairing request dialog window: http://stackoverflow.com/questions/17971834/android-prevent-bluetooth-pairing-dialog
+                    Log.d(TAG, "Pairing in process, need to dismiss the dialog ");
+                    Toast.makeText(getActivity(), "Pairing in process, please ignore system PIN request dialog", Toast.LENGTH_SHORT).show();
+                    //device.cancelPairingUserInput();
+
+                }else if (state == BluetoothDevice.BOND_BONDED && prevState == BluetoothDevice.BOND_BONDING) {
+                    Toast.makeText(getActivity(), "Just Successfully Paired " + device.getName() + ", Now Click It To Connect", Toast.LENGTH_LONG).show();
                     Log.d(TAG, "New Device Just Paired ");
-
                     // [Ian] now jump to DeviceListActivity to display device list for user to connect
                     Intent serverIntent = new Intent(getActivity(), DeviceListActivity.class);
                     startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_SECURE);
@@ -273,15 +303,22 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         getActivity().getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        // [Ian] add a bluetooth paired listener
-        // [Ian] register for broadcast when a new device try to pair for the first time
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        getActivity().registerReceiver(mPairReceiver, filter);
+
+        // [Ian] add a bluetooth pairing request listener
+        // see rodolfo's response and code here: http://stackoverflow.com/questions/17168263/how-to-pair-bluetooth-device-programmatically-android?lq=1
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_PAIRING_REQUEST);
+        getActivity().registerReceiver(mPairingRequestReceiver, filter);
+        //Log.d(TAG, "Pairing Request Receiver Registered");
+
+        // [Ian] register for broadcast when a new device finished pairing, since its Bond State Changed
+        filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        getActivity().registerReceiver(mPairingSuccessReceiver, filter);
     }
 
     @Override
     public void onStart() {
         super.onStart();
+        Log.i(TAG, "MainActivityFragment onStart()");
         // If BT is not on, request that it be enabled.
         // setupBluetooth() will then be called during onActivityResult
         if (!mBluetoothAdapter.isEnabled()) {
@@ -299,12 +336,17 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         if (mBluetoothService != null) {
             mBluetoothService.stop();
         }
+        //[Ian] unregister the two Pairing related Receivers that I added into this Fragment
+        getActivity().unregisterReceiver(mPairingRequestReceiver);
+        getActivity().unregisterReceiver(mPairingSuccessReceiver);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-
+        Log.i(TAG, "MainActivityFragment resumed");
+        //[Ian] I disallowed the following .Start() service, because when we returned from deviceListActivity after clicking the device we want to pair, the .Start() will delay the process.
+        /*
         // Performing this check in onResume() covers the case in which BT was
         // not enabled during onStart(), so we were paused to enable it...
         // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
@@ -315,6 +357,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                 mBluetoothService.start();
             }
         }
+        */
     }
 
     @Override
@@ -662,12 +705,17 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                 if (isConnectionExist == false) {
 
                     // launch enable bluetooth & setup bluetooth in onActivityResult()
+                    Log.d(TAG, "Option menu selected, first to enable bluetooth");
                     Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                     startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
 
                     // Launch the DeviceListActivity to see devices and do scan
+                    Log.d(TAG, "after enable bluetooth, call ConnectDevice() to setup connection");
                     Intent serverIntent = new Intent(getActivity(), DeviceListActivity.class);
                     startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_SECURE);
+
+                    Log.d(TAG, "after startActivityForResult (REQUEST_CONNECT_DEVICE_SECURE)");
+
                 } else{
                     Log.d(TAG, "try to connect while there is already a connection");
                     FragmentActivity activity = getActivity();

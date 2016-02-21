@@ -65,6 +65,7 @@ public class BluetoothService {
      * @param handler A Handler to send messages back to the UI Activity
      */
     public BluetoothService(Context context, Handler handler) {
+        Log.d(TAG, "BluetoothService () is called");
         mAdapter = BluetoothAdapter.getDefaultAdapter();
         mState = STATE_NONE;
         mHandler = handler;
@@ -95,7 +96,7 @@ public class BluetoothService {
      * session in listening (server) mode. Called by the Activity onResume()
      */
     public synchronized void start() {
-        Log.d(TAG, "start");
+        Log.d(TAG, "Bluetooth service start()");
 
         // Cancel any thread attempting to make a connection
         if (mConnectThread != null) {

@@ -76,6 +76,8 @@ public class DeviceListActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Log.i(TAG, "DeviceListActivity onCreate");
+
         // Setup the window
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.activity_device_list);
@@ -118,9 +120,6 @@ public class DeviceListActivity extends Activity {
         filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         this.registerReceiver(mReceiver, filter);
 
-        //[Ian] register for broadcast when a new device try to pair for the first time
-        filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        this.registerReceiver(mPairReceiver, filter);
 
         // Get the local Bluetooth adapter
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -147,6 +146,7 @@ public class DeviceListActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.i(TAG, "DeviceListActivity onDestroy");
 
         // Make sure we're not doing discovery anymore
         if (mBtAdapter != null) {
@@ -155,7 +155,6 @@ public class DeviceListActivity extends Activity {
 
         // Unregister broadcast listeners
         this.unregisterReceiver(mReceiver);
-        this.unregisterReceiver(mPairReceiver);
     }
 
     /**
@@ -235,18 +234,18 @@ public class DeviceListActivity extends Activity {
 
             // Get the BluetoothDevice object
             BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
-            //TODO: fix the pairing interface within APP
 
             int state = device.getBondState();
             Log.d(TAG, "current device name is: " + device.getName());
             Log.d(TAG, "current device bond state is: " + Integer.toString(state));
+            // now call pairDevice to pair the device
             pairDevice(device);
 
             // Set result and finish this Activity,
             //setResult(Activity.RESULT_OK, intent); // will invoke MainActivityFragment onActivityResult()
 
             // [Ian] changed the toast to happen in MainActivityFragment connectDevice()
-            Toast.makeText(getBaseContext(), "You should have just received a pairing request, see pairing notification and enter PIN 1234 ", Toast.LENGTH_LONG).show();
+            Toast.makeText(getBaseContext(), "Please Wait Patiently for Pairing Taking Place Automatically (No Manual PIN enter Needed)", Toast.LENGTH_LONG).show();
             finish();
         }
     };
@@ -288,33 +287,12 @@ public class DeviceListActivity extends Activity {
         }
     };
 
-    // [Ian] add a new receiver for new device pairing request (reference code: http://www.londatiga.net/it/programming/android/how-to-programmatically-pair-or-unpair-android-bluetooth-device/)
-    private final BroadcastReceiver mPairReceiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
 
-            if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
-                final int state        = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
-                final int prevState    = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
-
-                if (state == BluetoothDevice.BOND_BONDED && prevState == BluetoothDevice.BOND_BONDING) {
-                    Toast.makeText(getBaseContext(), "Just Paired", Toast.LENGTH_SHORT).show();
-                    Log.d(TAG, "New Device Just Paired ");
-                } else if (state == BluetoothDevice.BOND_NONE && prevState == BluetoothDevice.BOND_BONDED){
-                    Toast.makeText(getBaseContext(), "Un-Paired", Toast.LENGTH_SHORT).show();
-                    Log.d(TAG, "New Device Not Paired ");
-                }
-            }
-        }
-    };
-
-    //[Ian] added
+    //[Ian] after createBond() is called, system will invoke a pairing request dialog and a ACTION_PAIRING_REQUEST, which is trapped by our broadcast listener (mPairingRequestReceiver) in MainActivityFragment
     private void pairDevice(BluetoothDevice device) {
         try {
             Log.d(TAG, "Start Pairing... with: " + device.getName());
-            Method m = device.getClass().getMethod("createBond", (Class[]) null);
-            m.invoke(device, (Object[]) null);
-            Log.d(TAG, "Pairing finished.");
+            device.createBond();
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
