@@ -4,6 +4,7 @@
 
     <!-- Options Menu -->
     <string name="secure_connect">Connect to a BBQube device</string>
+    <string name="disconnect">Disconnect current BBQube device</string>
     <string name="insecure_connect">Connect a device - Insecure</string>
     <string name="start">Set Temp</string>
     <string name="cold_smoke">Cold Smoke</string>

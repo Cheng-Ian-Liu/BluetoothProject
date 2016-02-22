@@ -44,6 +44,9 @@ import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.highlight.Highlight;
 
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 
 /**
@@ -161,36 +164,12 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
     // [Ian] add a flag to check if a connection is already there
     public static boolean isConnectionExist = false;
 
-    // [Ian] add a new receiver when a new device attempts to pair for the first time, help to enter PIN programmatically without user input
-    private final BroadcastReceiver mPairingRequestReceiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals(BluetoothDevice.ACTION_PAIRING_REQUEST)) {
-                try {
-                        BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                        // assuming pin = 1234
-                        int pin=intent.getIntExtra("android.bluetooth.device.extra.PAIRING_KEY", 1234);
-                        //the pin in case you need to accept for an specific pin
-                        Log.d(TAG, "ACTION_PAIRING_REQUEST trapped. Start Auto Pairing. PIN = " + Integer.toString(pin));
-                        byte[] pinBytes;
-                        pinBytes = (""+pin).getBytes("UTF-8");
-                        device.setPin(pinBytes);
-                        //setPairing confirmation if neeeded
-                        device.setPairingConfirmation(true);
-                } catch (Exception e) {
-                    Log.e(TAG, "Error occurs when trying to auto pair");
-                    e.printStackTrace();
-                }
-            }
-        }
-    };
-
-
     // [Ian] add a new receiver when new device is successfully paired(reference code: http://www.londatiga.net/it/programming/android/how-to-programmatically-pair-or-unpair-android-bluetooth-device/)
-    private final BroadcastReceiver mPairingSuccessReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mPairingReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
+            // [Ian] if the action is related to Pairing State Change
             if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
                 final int state        = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
                 final int prevState    = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
@@ -201,20 +180,54 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                     // [Ian] check this one for modifying SDK to dismiss pairing request dialog window: http://stackoverflow.com/questions/17971834/android-prevent-bluetooth-pairing-dialog
                     Log.d(TAG, "Pairing in process, need to dismiss the dialog ");
                     Toast.makeText(getActivity(), "Pairing in process, please ignore system PIN request dialog", Toast.LENGTH_SHORT).show();
-                    //device.cancelPairingUserInput();
+
 
                 }else if (state == BluetoothDevice.BOND_BONDED && prevState == BluetoothDevice.BOND_BONDING) {
                     Toast.makeText(getActivity(), "Just Successfully Paired " + device.getName() + ", Now Click It To Connect", Toast.LENGTH_LONG).show();
                     Log.d(TAG, "New Device Just Paired ");
-                    // [Ian] now jump to DeviceListActivity to display device list for user to connect
+
+                    //pick one way from below:
+
+                    ///*
+                    // [Ian] Way 1: now jump to DeviceListActivity to display device list for user to select to connect
+                    Log.d(TAG, "Now directly go to DeviceListActivity to Request_CONNECY_DEVICE_SECURE");
                     Intent serverIntent = new Intent(getActivity(), DeviceListActivity.class);
                     startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_SECURE);
+                    //*/
+                    /*
+                    // [Ian] Way 2: Alternatively we can directly start connect process without going back to REQUEST_CONNECT_DEVICE_SECURE list
+                    Log.d(TAG, "Now directly start try to connectDevice in secure mode");
+                    Intent data = new Intent();
+                    intent.putExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS, device.getAddress());
+                    connectDevice(data, true);
+                    */
 
                 } else if (state == BluetoothDevice.BOND_NONE && prevState == BluetoothDevice.BOND_BONDED){
                     Toast.makeText(getActivity(), "Bluetooth Device Un-Paired", Toast.LENGTH_LONG).show();
                     Log.d(TAG, "New Device Not Paired ");
                 }
             }
+
+            // [Ian] add an action listener if the action is pairing request, then intercept it and pass the PIN through this following program without user enter the PIN manually
+            if (action.equals(BluetoothDevice.ACTION_PAIRING_REQUEST)) {
+                try {
+                    BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                    // assuming pin = 1234
+                    int pin=intent.getIntExtra("android.bluetooth.device.extra.PAIRING_KEY", 1234);
+                    //the pin in case you need to accept for an specific pin
+                    Log.d(TAG, "ACTION_PAIRING_REQUEST trapped. Start Auto Pairing. PIN = " + Integer.toString(pin));
+                    byte[] pinBytes;
+                    pinBytes = (""+pin).getBytes("UTF-8");
+                    device.setPin(pinBytes);
+                    //setPairing confirmation if neeeded
+                    device.setPairingConfirmation(true);
+                    //device.getClass().getMethod("cancelPairingUserInput").invoke(device);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error occurs when trying to auto pair");
+                    e.printStackTrace();
+                }
+            }
+
         }
     };
 
@@ -307,12 +320,12 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         // [Ian] add a bluetooth pairing request listener
         // see rodolfo's response and code here: http://stackoverflow.com/questions/17168263/how-to-pair-bluetooth-device-programmatically-android?lq=1
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_PAIRING_REQUEST);
-        getActivity().registerReceiver(mPairingRequestReceiver, filter);
+        getActivity().registerReceiver(mPairingReceiver, filter);
         //Log.d(TAG, "Pairing Request Receiver Registered");
 
         // [Ian] register for broadcast when a new device finished pairing, since its Bond State Changed
         filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        getActivity().registerReceiver(mPairingSuccessReceiver, filter);
+        getActivity().registerReceiver(mPairingReceiver, filter);
     }
 
     @Override
@@ -337,8 +350,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
             mBluetoothService.stop();
         }
         //[Ian] unregister the two Pairing related Receivers that I added into this Fragment
-        getActivity().unregisterReceiver(mPairingRequestReceiver);
-        getActivity().unregisterReceiver(mPairingSuccessReceiver);
+        getActivity().unregisterReceiver(mPairingReceiver);
     }
 
     @Override
@@ -697,11 +709,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
         switch (item.getItemId()) {
             case R.id.secure_connect_scan: {
-                        /*
-                        [Ian] need to determine whether the device has already been connected, if so do not connect again
-                        TODO: need to determine whether the device has already been connected, if so do not connect again
-                         */
-
+                //[Ian] need to determine whether the device has already been connected, if so, do not connect again
                 if (isConnectionExist == false) {
 
                     // launch enable bluetooth & setup bluetooth in onActivityResult()
@@ -735,6 +743,30 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
                 return true;
             }*/
+
+            // [Ian] added an option to disconnect current connection
+            case R.id.disconnect_current:{
+
+                if (mBluetoothService != null) {
+                    // Only if the state is STATE_NONE, do we know that we haven't started already
+                    if (mBluetoothService.getState() == BluetoothService.STATE_CONNECTED) {
+                        // Stop the BluetoothService
+                        mBluetoothService.stop();
+                        // set the flag
+                        isConnectionExist = false;
+                        mBluetoothService = null;
+                        Toast.makeText(getActivity(), "Terminating current connection...", Toast.LENGTH_SHORT).show();
+                        Log.d(TAG, "stopped current connection");
+
+                    }else{
+                        Toast.makeText(getActivity(), "There is no established connection", Toast.LENGTH_SHORT).show();
+                    }
+                }else {
+                    Toast.makeText(getActivity(), "There is no existing connection", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
+
 
             // this corresponds to Set Temp menu option being clicked
             case R.id.monitor_start: {

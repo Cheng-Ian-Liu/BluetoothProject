@@ -291,13 +291,15 @@ public class DeviceListActivity extends Activity {
     //[Ian] after createBond() is called, system will invoke a pairing request dialog and a ACTION_PAIRING_REQUEST, which is trapped by our broadcast listener (mPairingRequestReceiver) in MainActivityFragment
     private void pairDevice(BluetoothDevice device) {
         try {
-            Log.d(TAG, "Start Pairing... with: " + device.getName());
+            Log.d(TAG, "Start Pairing... with: " + device.getName() + " createBond() is called");
             device.createBond();
         } catch (Exception e) {
+            // TODO: sometimes createBond() is not invoked successfully, cannt get system dialog pop up, so that cannot intercept it. Need to capture that
+            Log.d(TAG, "Error happened when calling createBond()");
+            Toast.makeText(getBaseContext(), "Could not pair device from the APP, please try pairing from system bluetooth setting", Toast.LENGTH_LONG).show();
             Log.e(TAG, e.getMessage());
         }
     }
-
 
 
 }
