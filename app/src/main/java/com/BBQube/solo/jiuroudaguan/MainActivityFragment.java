@@ -25,6 +25,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -238,6 +241,16 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
             "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"
     };
 
+    // [Ian] lower half buttons and textviews
+    private Button timerSetButton;
+    private Button targetTempSetButton;
+
+    private TextView currentStatusTextView;
+    private TextView currentGrillTempTextView;
+    private TextView currentFood1TempTextView;
+    private TextView currentFood2TempTextView;
+    private TextView targetGrillTempTextView;
+
 
     //bluetooth things
     private static final String TAG = "MainFragment";
@@ -380,7 +393,18 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        //mConversationView = (ListView) view.findViewById(R.id.in);
+        Log.d(TAG, "MainFragment onViewCreated");
+        // [Ian] add several textview displays and buttons at the bottom half
+        timerSetButton = (Button) view.findViewById(R.id.button_setTimer);
+        targetTempSetButton = (Button) view.findViewById(R.id.button_setTemp);
+
+        currentFood1TempTextView = (TextView) view.findViewById(R.id.textView_food1temp);
+        currentFood2TempTextView = (TextView) view.findViewById(R.id.textView_food2temp);
+        currentGrillTempTextView = (TextView) view.findViewById(R.id.textView_currentGrillTemp);
+        currentStatusTextView = (TextView) view.findViewById(R.id.textView_currentStatus);
+        targetGrillTempTextView = (TextView) view.findViewById(R.id.textView_targetTemp);
+
+        //add the chart at the top half
         mChart = (LineChart) view.findViewById(R.id.chart1);
         mChart.setOnChartValueSelectedListener(this);
 
@@ -629,13 +653,14 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                     mConversationArrayAdapter.add(writeMessage);
                     break;
 
-                //[Ian] add connection message to let user know
+                //[Ian] add connection message to let user know, also updated the current status Textview on UI
                 case Constants.MESSAGE_DEVICE_NAME:
                     // save the connected device's name
                     mConnectedDeviceName = msg.getData().getString(Constants.DEVICE_NAME);
                     if (null != activity) {
-                        Toast.makeText(activity, "Connected to "
-                                + mConnectedDeviceName + " Successfully", Toast.LENGTH_LONG).show();
+                        Toast.makeText(activity, "Connected to " + mConnectedDeviceName + " Successfully", Toast.LENGTH_LONG).show();
+                        currentStatusTextView.setText(mConnectedDeviceName + "\n" + "Connected");
+                        currentStatusTextView.setTextColor(Color.GREEN);
                     }
                     break;
 
@@ -752,9 +777,11 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                     if (mBluetoothService.getState() == BluetoothService.STATE_CONNECTED) {
                         // Stop the BluetoothService
                         mBluetoothService.stop();
-                        // set the flag
+                        // set the flag and update status textview in UI
                         isConnectionExist = false;
                         mBluetoothService = null;
+                        currentStatusTextView.setText("Device Not Connected");
+                        currentStatusTextView.setTextColor(Color.RED);
                         Toast.makeText(getActivity(), "Terminating current connection...", Toast.LENGTH_SHORT).show();
                         Log.d(TAG, "stopped current connection");
 
@@ -880,6 +907,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         Log.i("Nothing selected", "Nothing selected.");
     }
 
+    // will call to show Temperature Dialog
     private void showTemperatureDialog() {
         FragmentManager fm = getActivity().getSupportFragmentManager();
         TemperatureDialog editNameDialog = TemperatureDialog.newInstance("Set Temperature", this);
