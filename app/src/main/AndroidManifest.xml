@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.BBQube.solo.jiuroudaguan" >
+    package="com.BBQube.solo.jiuroudaguan">
 
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme">
         <activity
-            android:name="com.BBQube.solo.jiuroudaguan.MainActivity"
+            android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar" >
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -22,20 +23,23 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.BBQube.solo.jiuroudaguan.DeviceListActivity"
+            android:name=".DeviceListActivity"
             android:configChanges="orientation|keyboardHidden"
             android:label="@string/select_device"
             android:theme="@android:style/Theme.Holo.Dialog" />
         <activity
-            android:name="com.BBQube.solo.jiuroudaguan.Main2Activity"
+            android:name=".Main2Activity"
             android:label="@string/title_activity_main2"
-            android:theme="@style/AppTheme.NoActionBar" >
-        </activity>
+            android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity
-            android:name="com.BBQube.solo.jiuroudaguan.RealtimeLineChartActivity"
+            android:name=".RealtimeLineChartActivity"
             android:label="@string/title_activity_realtimelinechart"
-            android:theme="@style/AppTheme.NoActionBar" >
-        </activity>
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+
+        <receiver
+            android:name=".AlarmReceiver"
+            android:enabled="true"
+            android:exported="true"></receiver>
     </application>
 
 </manifest>

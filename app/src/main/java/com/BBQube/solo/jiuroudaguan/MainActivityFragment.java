@@ -161,7 +161,7 @@ class ByteQueue {
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment implements OnChartValueSelectedListener, TemperatureDialog.TemperatureDialogListener{
+public class MainActivityFragment extends Fragment implements OnChartValueSelectedListener, TemperatureDialog.TemperatureDialogListener, TimerDialog.TimerDialogListener{
 
 
     // [Ian] add a flag to check if a connection is already there
@@ -403,6 +403,13 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         currentGrillTempTextView = (TextView) view.findViewById(R.id.textView_currentGrillTemp);
         currentStatusTextView = (TextView) view.findViewById(R.id.textView_currentStatus);
         targetGrillTempTextView = (TextView) view.findViewById(R.id.textView_targetTemp);
+
+        timerSetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showTimerDialog();
+            }
+        });
 
         //add the chart at the top half
         mChart = (LineChart) view.findViewById(R.id.chart1);
@@ -910,9 +917,9 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
     // will call to show Temperature Dialog
     private void showTemperatureDialog() {
         FragmentManager fm = getActivity().getSupportFragmentManager();
-        TemperatureDialog editNameDialog = TemperatureDialog.newInstance("Set Temperature", this);
+        TemperatureDialog tempSetDialog = TemperatureDialog.newInstance("Set Temperature", this);
 
-        editNameDialog.show(fm, "fragment_dialog_temperature");
+        tempSetDialog.show(fm, "fragment_dialog_temperature");
     }
 
     @Override
@@ -922,6 +929,21 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         Log.d(TAG, "temp set is: "  + temp);
         sendMessage(temp);
         start = Boolean.TRUE;
+    }
+
+    // [Ian] define timer dialog that allows user to set up the Alarm
+    private void showTimerDialog(){
+        FragmentManager fm = getActivity().getSupportFragmentManager();
+        TimerDialog timerSetDialog = TimerDialog.newInstance("Set Timer", this);
+
+        timerSetDialog.show(fm, "fragment_dialog_timer");
+    }
+
+    @Override
+    public void onSetTimerDialog(String temp) {
+        // [Ian]
+        Toast.makeText(getActivity(),"Timer Dialog returned " + temp,Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "Timer Dialog returned "  + temp);
     }
 
 }
