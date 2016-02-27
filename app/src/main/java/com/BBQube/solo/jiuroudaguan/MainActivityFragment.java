@@ -169,7 +169,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
     // [Ian] add a flag to check if an Alarm is being set, and also a public long integer to store the value of target Alarm time
     public static boolean isAlarmExist = false;
-    public long AlarmTargetTimeMilliSec;
+    public static long AlarmTargetTimeMilliSec = 0000;
 
     // [Ian] add a new receiver when new device is successfully paired(reference code: http://www.londatiga.net/it/programming/android/how-to-programmatically-pair-or-unpair-android-bluetooth-device/)
     private final BroadcastReceiver mPairingReceiver = new BroadcastReceiver() {
@@ -250,6 +250,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
     private Button targetTempSetButton;
 
     private TextView currentStatusTextView;
+    private TextView currentTimerStatusTextView;
     private TextView currentGrillTempTextView;
     private TextView currentFood1TempTextView;
     private TextView currentFood2TempTextView;
@@ -406,6 +407,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         currentFood2TempTextView = (TextView) view.findViewById(R.id.textView_food2temp);
         currentGrillTempTextView = (TextView) view.findViewById(R.id.textView_currentGrillTemp);
         currentStatusTextView = (TextView) view.findViewById(R.id.textView_currentStatus);
+        currentTimerStatusTextView = (TextView) view.findViewById(R.id.textView_timerStatus);
         targetGrillTempTextView = (TextView) view.findViewById(R.id.textView_targetTemp);
 
         timerSetButton.setOnClickListener(new View.OnClickListener() {
@@ -938,16 +940,28 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
     // [Ian] define timer dialog that allows user to set up the Alarm
     private void showTimerDialog(){
         FragmentManager fm = getActivity().getSupportFragmentManager();
-        TimerDialog timerSetDialog = TimerDialog.newInstance("Set Timer", this);
+        TimerDialog timerSetDialog = TimerDialog.newInstance(AlarmTargetTimeMilliSec, this);
 
         timerSetDialog.show(fm, "fragment_dialog_timer");
     }
 
     @Override
     public void onSetTimerDialog(Long TimerFinishTime) {
-        // [Ian]
-        Toast.makeText(getActivity(),"Dialog Returned, Timer is Set",Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "Timer Dialog returned "  + Long.toString(TimerFinishTime));
+        // [Ian] pass the finish time to this activity so that when starts a new dialog, we can pass it on
+        AlarmTargetTimeMilliSec = TimerFinishTime;
+        //Toast.makeText(getActivity(),"Dialog Returned to MainActivity, Timer is Modified",Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "Timer Dialog returned " + Long.toString(TimerFinishTime));
+
+        // update the timer view
+        if (AlarmTargetTimeMilliSec == 0000) {
+            //no existing timer
+            currentTimerStatusTextView.setText("No Timer is Set");
+            currentTimerStatusTextView.setTextColor(Color.RED);
+        }else{
+            // there is an existing timer
+            currentTimerStatusTextView.setText("Timer is Set");
+            currentTimerStatusTextView.setTextColor(Color.GREEN);
+        };
 
     }
 
