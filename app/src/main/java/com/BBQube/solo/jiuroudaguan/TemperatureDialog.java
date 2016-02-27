@@ -15,6 +15,9 @@ import android.widget.TextView;
 public class TemperatureDialog extends DialogFragment implements SeekBar.OnSeekBarChangeListener {
     public static int MIN_TEMPERATURE = 200;
     public static int MAX_TEMPERATURE = 500;
+    private static int INCREMENTAL_STEP = 10;
+
+    int progressChanged = MIN_TEMPERATURE;
 
     private TextView txtTemperatureValue;
 
@@ -43,13 +46,15 @@ public class TemperatureDialog extends DialogFragment implements SeekBar.OnSeekB
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         txtTemperatureValue = (TextView) view.findViewById(R.id.txtSelectedTempValue);
+        // display the unit F
         ((TextView)view.findViewById(R.id.txtSelectedTempValueType)).setText((char) 0x00B0 + "F");
         seekTemperature = (SeekBar) view.findViewById(R.id.seekTemp);
 
         btnSet =(TextView)view.findViewById(R.id.btnSet);
         btnCancel =(TextView)view.findViewById(R.id.btnCancel);
-
-        seekTemperature.setMax(MAX_TEMPERATURE);
+        // [Ian] set max to be MAX-MIN to compensate the new range from MIN to MIN + MAX after I modify the onProgressChanged method
+        seekTemperature.setMax(MAX_TEMPERATURE-MIN_TEMPERATURE);
+        seekTemperature.incrementProgressBy(INCREMENTAL_STEP);
         seekTemperature.setOnSeekBarChangeListener(this);
         txtTemperatureValue.setText( "" + MIN_TEMPERATURE);
 
@@ -73,11 +78,17 @@ public class TemperatureDialog extends DialogFragment implements SeekBar.OnSeekB
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
+        /*
         if(progress <= MIN_TEMPERATURE){
             progress = MIN_TEMPERATURE + progress;
-        }
-        txtTemperatureValue.setText("" + progress );
+        }*/
+        // to shift the starting point to MIN_TEMPERATURE
+        progressChanged = progress + MIN_TEMPERATURE;
+        // normalize according to incremental steps
+        progressChanged = progressChanged/INCREMENTAL_STEP;
+        progressChanged = progressChanged*INCREMENTAL_STEP;
+
+        txtTemperatureValue.setText("" + progressChanged );
 
     }
 

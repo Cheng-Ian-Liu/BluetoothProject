@@ -167,6 +167,10 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
     // [Ian] add a flag to check if a connection is already there
     public static boolean isConnectionExist = false;
 
+    // [Ian] add a flag to check if an Alarm is being set, and also a public long integer to store the value of target Alarm time
+    public static boolean isAlarmExist = false;
+    public long AlarmTargetTimeMilliSec;
+
     // [Ian] add a new receiver when new device is successfully paired(reference code: http://www.londatiga.net/it/programming/android/how-to-programmatically-pair-or-unpair-android-bluetooth-device/)
     private final BroadcastReceiver mPairingReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -940,10 +944,11 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
     }
 
     @Override
-    public void onSetTimerDialog(String temp) {
+    public void onSetTimerDialog(Long TimerFinishTime) {
         // [Ian]
-        Toast.makeText(getActivity(),"Timer Dialog returned " + temp,Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "Timer Dialog returned "  + temp);
+        Toast.makeText(getActivity(),"Dialog Returned, Timer is Set",Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "Timer Dialog returned "  + Long.toString(TimerFinishTime));
+
     }
 
 }
