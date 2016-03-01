@@ -417,6 +417,13 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
             }
         });
 
+        targetTempSetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showTemperatureDialog();
+            }
+        });
+
         //add the chart at the top half
         mChart = (LineChart) view.findViewById(R.id.chart1);
         mChart.setOnChartValueSelectedListener(this);
@@ -945,6 +952,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         timerSetDialog.show(fm, "fragment_dialog_timer");
     }
 
+    // [Ian] the interface to receive user set timer value back from TimerDialog
     @Override
     public void onSetTimerDialog(Long TimerFinishTime) {
         // [Ian] pass the finish time to this activity so that when starts a new dialog, we can pass it on
