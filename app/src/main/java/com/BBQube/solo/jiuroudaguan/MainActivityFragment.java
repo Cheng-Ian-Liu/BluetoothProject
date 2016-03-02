@@ -965,15 +965,21 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
             //no existing timer
             currentTimerStatusTextView.setText("No Timer is Set");
             currentTimerStatusTextView.setTextColor(Color.RED);
+            // also set the Set Timer Button to Set Timer
+            timerSetButton.setText("Set New Timer");
+
         }else if (AlarmTargetTimeMilliSec == 1111){
             // meaning time is up for the current timer
             currentTimerStatusTextView.setText("Time is Up");
             currentTimerStatusTextView.setTextColor(Color.MAGENTA);
+            timerSetButton.setText("Set New Timer");
         }
         else{
             // there is an existing timer
             currentTimerStatusTextView.setText("Timer is Set");
             currentTimerStatusTextView.setTextColor(Color.GREEN);
+
+            timerSetButton.setText("View Current Timer");
         };
 
     }

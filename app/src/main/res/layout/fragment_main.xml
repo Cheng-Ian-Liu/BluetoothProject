@@ -96,7 +96,7 @@
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Set Timer"
+        android:text="Set New Timer"
         android:id="@+id/button_setTimer"
         android:layout_marginBottom="18dp"
         android:layout_alignParentBottom="true"
