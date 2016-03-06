@@ -14,6 +14,12 @@
         android:id="@+id/monitor_cs"
         android:title="@string/cold_smoke"/>
     <item
+        android:id="@+id/sous_vide"
+        android:title="@string/sous_vide"/>
+    <item
+        android:id="@+id/electrical_smoke"
+        android:title="@string/electrical_smoke"/>
+    <item
         android:id="@+id/monitor_mf"
         android:title="@string/max_fan"/>
     <item

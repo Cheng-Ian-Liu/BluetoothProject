@@ -417,13 +417,6 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
             }
         });
 
-        targetTempSetButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showTemperatureDialog();
-            }
-        });
-
         //add the chart at the top half
         mChart = (LineChart) view.findViewById(R.id.chart1);
         mChart.setOnChartValueSelectedListener(this);
@@ -815,19 +808,46 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
             }
 
 
-            // this corresponds to Set Temp menu option being clicked
             case R.id.monitor_start: {
+                // Set Temp
+                String TitleMessage = "Set Temperature [Standard Mode]";
+                int MinTemp = 200;
+                int MaxTemp = 500;
+                int IncrementalStep = 10;
+                String ModeCode = "000";
 
-                showTemperatureDialog();
-                // start
-                //sendMessage("225");
-                //start = Boolean.TRUE;
+                showTemperatureDialog(TitleMessage, MinTemp, MaxTemp, IncrementalStep, ModeCode);
+                // note: sendMessage() and Start will be called within showTemperatureDialog() through onSetTemperatureDialog() interface which is returned from TemperatureDialog
                 return true;
             }
             case R.id.monitor_cs: {
                 // Cold Smoke
                 sendMessage("999");
                 start = Boolean.TRUE;
+                return true;
+            }
+            case R.id.sous_vide: {
+                // Sous Vide
+                String TitleMessage = "Set Temperature [Sous Vide]";
+                int MinTemp = 100;
+                int MaxTemp = 210;
+                int IncrementalStep = 5;
+                String ModeCode = "666";
+
+                showTemperatureDialog(TitleMessage, MinTemp, MaxTemp, IncrementalStep, ModeCode);
+                // note: sendMessage() and Start will be called within showTemperatureDialog() through onSetTemperatureDialog() interface which is returned from TemperatureDialog
+                return true;
+            }
+            case R.id.electrical_smoke: {
+                // Electrical Smoke
+                String TitleMessage = "Set Temperature [Electrical Smoke]";
+                int MinTemp = 200;
+                int MaxTemp = 500;
+                int IncrementalStep = 10;
+                String ModeCode = "555";
+
+                showTemperatureDialog(TitleMessage, MinTemp, MaxTemp, IncrementalStep, ModeCode);
+                // note: sendMessage() and Start will be called within showTemperatureDialog() through onSetTemperatureDialog() interface which is returned from TemperatureDialog
                 return true;
             }
             case R.id.monitor_mf: {
@@ -927,12 +947,20 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         Log.i("Nothing selected", "Nothing selected.");
     }
 
-    // will call to show Temperature Dialog
-    private void showTemperatureDialog() {
+    // call to show Temperature Dialog
+    private void showTemperatureDialog(String TitleMessage, int MinTemp, int MaxTemp, int IncrementalStep, String ModeCode) {
         FragmentManager fm = getActivity().getSupportFragmentManager();
-        TemperatureDialog tempSetDialog = TemperatureDialog.newInstance("Set Temperature", this);
+        TemperatureDialog tempSetDialog = TemperatureDialog.newInstance(TitleMessage, this, MinTemp,MaxTemp, IncrementalStep, ModeCode);
 
         tempSetDialog.show(fm, "fragment_dialog_temperature");
+    }
+
+    // [Ian] define timer dialog that allows user to set up the Alarm
+    private void showTimerDialog(){
+        FragmentManager fm = getActivity().getSupportFragmentManager();
+        TimerDialog timerSetDialog = TimerDialog.newInstance(AlarmTargetTimeMilliSec, this);
+
+        timerSetDialog.show(fm, "fragment_dialog_timer");
     }
 
     @Override
@@ -942,14 +970,6 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         Log.d(TAG, "temp set is: "  + temp);
         sendMessage(temp);
         start = Boolean.TRUE;
-    }
-
-    // [Ian] define timer dialog that allows user to set up the Alarm
-    private void showTimerDialog(){
-        FragmentManager fm = getActivity().getSupportFragmentManager();
-        TimerDialog timerSetDialog = TimerDialog.newInstance(AlarmTargetTimeMilliSec, this);
-
-        timerSetDialog.show(fm, "fragment_dialog_timer");
     }
 
     // [Ian] the interface to receive user set timer value back from TimerDialog

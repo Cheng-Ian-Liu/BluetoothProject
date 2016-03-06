@@ -32,8 +32,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/txtSelectedTemp"
-        android:layout_alignBaseline="@id/txtSelectedTemp"
-        android:text="200" />
+        android:layout_alignBaseline="@id/txtSelectedTemp" />
 
     <TextView
         android:id="@+id/txtSelectedTempValueType"
@@ -59,7 +58,8 @@
         android:layout_below="@+id/seekTemp"
         android:textSize="10sp"
 
-        android:layout_marginLeft="10dp"/>
+        android:layout_marginLeft="10dp"
+        android:id="@+id/TextView_minTemp" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -68,7 +68,8 @@
         android:text="500"
         android:layout_below="@+id/seekTemp"
         android:textSize="10sp"
-        android:layout_marginRight="10dp"/>
+        android:layout_marginRight="10dp"
+        android:id="@+id/TextView_maxTemp" />
 
     <TextView
         android:id="@+id/btnSet"

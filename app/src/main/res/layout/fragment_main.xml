@@ -88,9 +88,8 @@
         android:text="Device Not Connected "
         android:id="@+id/textView_currentStatus"
         android:textColor="#ff0000"
-        android:layout_alignTop="@+id/button_setTimer"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="6dp" />
+        android:layout_below="@+id/textView5"
+        android:layout_alignEnd="@+id/textView_food2temp" />
 
     <Button
         style="?android:attr/buttonStyleSmall"
@@ -125,8 +124,8 @@
         android:text="No Timer is Set"
         android:id="@+id/textView_timerStatus"
         android:textColor="#ff0000"
-        android:layout_alignBottom="@+id/button_setTimer"
-        android:layout_alignStart="@+id/textView_currentStatus" />
+        android:layout_below="@+id/textView_currentStatus"
+        android:layout_alignParentEnd="true" />
 
     <!--<ListView-->
         <!--android:id="@+id/in"-->

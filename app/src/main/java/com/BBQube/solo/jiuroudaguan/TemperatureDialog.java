@@ -13,13 +13,23 @@ import android.widget.TextView;
  * Created by jacobs2 on 1/30/16.
  */
 public class TemperatureDialog extends DialogFragment implements SeekBar.OnSeekBarChangeListener {
-    public static int MIN_TEMPERATURE = 200;
-    public static int MAX_TEMPERATURE = 500;
-    private static int INCREMENTAL_STEP = 10;
+    public static String NORMAL_MODE = "000";
+    public static String SOUS_VIDE_MODE = "666";
+    public static String ELECTRICAL_SMOKE_MODE = "555";
 
-    int progressChanged = MIN_TEMPERATURE;
+    public static int MIN_TEMPERATURE;
+    public static int MAX_TEMPERATURE;
+    public static int INCREMENTAL_STEP;
+
+    public static int progressChanged = MIN_TEMPERATURE;
+
+    public static String MODE_CODE;
+    public static String TITLE_MESSAGE;
 
     private TextView txtTemperatureValue;
+    private TextView txtView_MinTemp;
+    private TextView txtView_MaxTemp;
+    private TextView txtView_DialogTitle;
 
     private SeekBar  seekTemperature;
 
@@ -30,8 +40,15 @@ public class TemperatureDialog extends DialogFragment implements SeekBar.OnSeekB
     public TemperatureDialog() {
     }
 
-    public static TemperatureDialog newInstance(String title, MainActivityFragment fragment) {
+    // [Ian] added four more parameters, min_Temp, max_Temp, incrementalStep, twoMessageMode,
+    public static TemperatureDialog newInstance(String TitleMessage, MainActivityFragment fragment, int MinTemp, int MaxTemp, int IncrementalStep, String ModeCode) {
         listener = fragment;
+        MIN_TEMPERATURE = MinTemp;
+        MAX_TEMPERATURE = MaxTemp;
+        INCREMENTAL_STEP = IncrementalStep;
+        MODE_CODE = ModeCode;
+        TITLE_MESSAGE = TitleMessage;
+
         TemperatureDialog frag = new TemperatureDialog();
         return frag;
     }
@@ -46,6 +63,10 @@ public class TemperatureDialog extends DialogFragment implements SeekBar.OnSeekB
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         txtTemperatureValue = (TextView) view.findViewById(R.id.txtSelectedTempValue);
+        txtView_MinTemp = (TextView) view.findViewById(R.id.TextView_minTemp);
+        txtView_MaxTemp = (TextView) view.findViewById(R.id.TextView_maxTemp);
+        txtView_DialogTitle = (TextView) view.findViewById(R.id.txtTitle);
+
         // display the unit F
         ((TextView)view.findViewById(R.id.txtSelectedTempValueType)).setText((char) 0x00B0 + "F");
         seekTemperature = (SeekBar) view.findViewById(R.id.seekTemp);
@@ -56,12 +77,24 @@ public class TemperatureDialog extends DialogFragment implements SeekBar.OnSeekB
         seekTemperature.setMax(MAX_TEMPERATURE-MIN_TEMPERATURE);
         seekTemperature.incrementProgressBy(INCREMENTAL_STEP);
         seekTemperature.setOnSeekBarChangeListener(this);
-        txtTemperatureValue.setText( "" + MIN_TEMPERATURE);
+        txtTemperatureValue.setText("" + MIN_TEMPERATURE);
+        txtView_MinTemp.setText("" + MIN_TEMPERATURE);
+        txtView_MaxTemp.setText("" + MAX_TEMPERATURE);
+        txtView_DialogTitle.setText(TITLE_MESSAGE);
 
         btnSet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                listener.onSetTemperatureDialog(txtTemperatureValue.getText() + "");
+
+                // [Ian] depending on whether we are using TwoMessageMode or not, we may send one message or two messages
+                if (MODE_CODE.equalsIgnoreCase(NORMAL_MODE)){
+                    // normal mode
+                    listener.onSetTemperatureDialog(txtTemperatureValue.getText() + "");
+                } else if (MODE_CODE.equalsIgnoreCase(SOUS_VIDE_MODE)){
+                    listener.onSetTemperatureDialog(SOUS_VIDE_MODE + "," + txtTemperatureValue.getText());
+                } else if (MODE_CODE.equalsIgnoreCase(ELECTRICAL_SMOKE_MODE)){
+                    listener.onSetTemperatureDialog(ELECTRICAL_SMOKE_MODE + "," + txtTemperatureValue.getText());
+                }
                 dismiss();
             }
         });

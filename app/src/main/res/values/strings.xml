@@ -9,6 +9,8 @@
     <string name="start">Set Temp</string>
     <string name="cold_smoke">Cold Smoke</string>
     <string name="max_fan">Max Fan</string>
+    <string name="sous_vide">Sous Vide</string>
+    <string name="electrical_smoke">Electrical Smoke</string>
     <string name="stop">Stop</string>
 
     <!--  MainActivity -->
