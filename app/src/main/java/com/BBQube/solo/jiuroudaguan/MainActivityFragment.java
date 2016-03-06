@@ -467,9 +467,9 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         YAxis leftAxis = mChart.getAxisLeft();
         //leftAxis.setTypeface(tf);
         leftAxis.setTextColor(Color.WHITE);
-        leftAxis.setAxisMaxValue(500f);
-        leftAxis.setAxisMinValue(-500f);
-        leftAxis.setStartAtZero(false);
+        leftAxis.setAxisMaxValue(700f);
+        leftAxis.setAxisMinValue(0f);
+        leftAxis.setStartAtZero(true);
         leftAxis.setDrawGridLines(true);
 
         YAxis rightAxis = mChart.getAxisRight();
