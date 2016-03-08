@@ -966,7 +966,13 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
     @Override
     public void onSetTemperatureDialog(String temp) {
         // [Ian] fixed the bug of keep setting 225
-        Toast.makeText(getActivity(),"The temperature setting value is: " + temp,Toast.LENGTH_SHORT).show();
+        // depending on the length of the temp string, only take the last 3 chars out and display in the Toast (since only the last 3 digits are actual temp)
+        if (temp.length() <= 3)
+            Toast.makeText(getActivity(),"The temperature setting value is: " + temp, Toast.LENGTH_SHORT).show();
+        else{
+            Toast.makeText(getActivity(),"The temperature setting value is: " + temp.substring(temp.length() - 3), Toast.LENGTH_SHORT).show();
+        }
+
         Log.d(TAG, "temp set is: "  + temp);
         sendMessage(temp);
         start = Boolean.TRUE;
