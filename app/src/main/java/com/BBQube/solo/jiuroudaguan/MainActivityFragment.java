@@ -426,7 +426,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
         // no description text
         mChart.setDescription("");
-        mChart.setNoDataTextDescription("You need to provide data for the chart.");
+        mChart.setNoDataTextDescription("Select a cooking mode to get started");
 
         // enable touch gestures
         mChart.setTouchEnabled(true);
@@ -932,7 +932,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
     private LineDataSet createSet() {
 
-        LineDataSet set = new LineDataSet(null, "Dynamic Data");
+        LineDataSet set = new LineDataSet(null, "Real-Time Grill Temperature");
         set.setAxisDependency(AxisDependency.LEFT);
         set.setColor(ColorTemplate.getHoloBlue());
         set.setCircleColor(Color.WHITE);
