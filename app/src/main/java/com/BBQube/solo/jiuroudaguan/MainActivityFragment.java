@@ -50,6 +50,8 @@ import com.github.mikephil.charting.highlight.Highlight;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -274,6 +276,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
      */
     private byte[] mReceiveBuffer;
     private String stringRead;
+    private String stringReadSixTuple;
     private Boolean start = Boolean.FALSE;
 
 
@@ -623,40 +626,44 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                         String tmpStringRead = new String(mReceiveBuffer, 0, bytesRead);
 
                         if (tmpStringRead.contains("\r\n")){
-                            Log.i(TAG, stringRead);
+                            Log.i(TAG, "ReadString contains slash r slash n " + stringRead);
                             stringRead = "";
 
                         } else {
+                            //Log.i(TAG, "current read data: "+ tmpStringRead);
+
                             stringRead += tmpStringRead;
                             // TODO 改这个适应接口数据
-                            /*
-                            String[] arr = stringRead.split(" ", 4);
-                            if (arr.length == 4) {
-                                Log.i(TAG, stringRead);
-                                Log.e(TAG, arr[0]);
-                                Log.e(TAG, arr[1]);
-                                Log.e(TAG, arr[2]);
-                                Log.e(TAG, arr[3]);
-                                if (start) {
-                                    addEntry(arr);
+                            // [Ian] there was a bug in the previous code
+                            // [Ian] added a new deliminator mark $$$
+                            if (stringRead.endsWith("$$$")){
+                                Log.i(TAG, "new read message: "+ stringRead);
+
+                                String[] arr = stringRead.split(":::", 6);
+                                if (arr.length == 6) {
+                                    //Log.e(TAG, arr[0]);
+                                    //Log.e(TAG, arr[1]);
+                                    //Log.e(TAG, arr[2]);
+                                    //Log.e(TAG, arr[3]);
+                                    //Log.e(TAG, arr[4]);
+                                    //Log.e(TAG, arr[5]);
+
+                                    // example of stringRead: time0:29:9:::65:::-459:::-459:::0:::IDLE$$$
+                                    // reformat time (arr[0]), delete header "time"
+                                    String timeTemp = arr[0];
+                                    timeTemp = timeTemp.substring(timeTemp.lastIndexOf("e") + 1);
+                                    arr[0] = timeTemp;
+
+                                    if (start) {
+                                        addEntry(arr);
+                                    }
                                 }
-                            }
-                            */
-                            String[] arr = stringRead.split(":::", 5);
-                            if (arr.length == 5) {
-                                Log.i(TAG, stringRead);
-                                Log.e(TAG, arr[0]);
-                                Log.e(TAG, arr[1]);
-                                Log.e(TAG, arr[2]);
-                                Log.e(TAG, arr[3]);
-                                Log.e(TAG, arr[4]);
-                                if (start) {
-                                    addEntry(arr);
-                                }
+                                stringRead = "";
                             }
                         }
 
                     } catch (InterruptedException e) {
+                        Log.e(TAG, "error happened when trying to convert read message format");
                     }
                     break;
                 case Constants.MESSAGE_WRITE:
@@ -880,9 +887,13 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         LineData data = mChart.getData();
         String time = arr[0];
         String grillTemp = arr[1];
-        String meatTemp1 = arr[2];
-        String meatTemp2 = arr[3];
+        String foodTemp1 = arr[2];
+        String foodTemp2 = arr[3];
         String fanPower = arr[4];
+        String status = arr[5];
+
+        Log.i(TAG, "within addEntry: addXValue (time):" + time );
+        Log.i(TAG, "within addEntry: addYValue (grillTemp):" + grillTemp );
 
         if (data != null) {
 
