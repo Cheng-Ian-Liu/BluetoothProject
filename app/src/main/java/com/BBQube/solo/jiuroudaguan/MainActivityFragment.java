@@ -696,7 +696,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                                     int iEnd = modeStatus.indexOf("$$$"); //this finds the first occurrence of "$$$"
                                     if (iEnd != -1) {
                                         String subStringModeStatus = modeStatus.substring(0 ,iEnd);
-                                        currentModeStatusTextView.setText("Mode: " + subStringModeStatus);
+                                        currentModeStatusTextView.setText("Status: " + subStringModeStatus);
                                         currentModeStatusTextView.setTextColor(Color.GREEN);
                                     }
 
