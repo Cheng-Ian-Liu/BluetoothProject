@@ -888,6 +888,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                     // Cold Smoke
                     sendMessage("999");
                     start = Boolean.TRUE;
+                    Toast.makeText(getActivity(), "Cold Smoke Mode is Selected", Toast.LENGTH_SHORT).show();
                 } else
                     Toast.makeText(getActivity(), "Please connect with a BBQube device first", Toast.LENGTH_SHORT).show();
 
@@ -930,6 +931,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                     // Max Fan Power
                     sendMessage("888");
                     start = Boolean.TRUE;
+                    Toast.makeText(getActivity(), "Max Fan Mode is Selected", Toast.LENGTH_SHORT).show();
                 } else
                     Toast.makeText(getActivity(), "Please connect with a BBQube device first", Toast.LENGTH_SHORT).show();
 
@@ -942,6 +944,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                     start = Boolean.FALSE;
                     targetGrillTempTextView.setText("Stopped");
                     targetGrillTempTextView.setTextColor(Color.RED);
+                    Toast.makeText(getActivity(), "Stop is Selected", Toast.LENGTH_SHORT).show();
                 } else
                     Toast.makeText(getActivity(), "Please connect with a BBQube device first", Toast.LENGTH_SHORT).show();
                 return true;
