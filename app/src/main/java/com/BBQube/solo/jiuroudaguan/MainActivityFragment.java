@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
@@ -16,7 +15,6 @@ import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
@@ -26,9 +24,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.graphics.Color;
@@ -46,12 +41,6 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.highlight.Highlight;
-
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 /**
@@ -166,8 +155,7 @@ class ByteQueue {
 public class MainActivityFragment extends Fragment implements OnChartValueSelectedListener, TemperatureDialog.TemperatureDialogListener, TimerDialog.TimerDialogListener{
 
 
-    // [Ian] add a flag to check if a connection is already there
-    public static boolean isConnectionExist = false;
+
 
     // [Ian] add a flag to check if an Alarm is being set, and also a public long integer to store the value of target Alarm time
     public static boolean isAlarmExist = false;
@@ -251,7 +239,8 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
     private Button timerSetButton;
     private Button targetTempSetButton;
 
-    private TextView currentStatusTextView;
+    private TextView currentConnectionStatusTextView;
+    private TextView currentModeStatusTextView;
     private TextView currentTimerStatusTextView;
     private TextView currentGrillTempTextView;
     private TextView currentFood1TempTextView;
@@ -276,8 +265,10 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
      */
     private byte[] mReceiveBuffer;
     private String stringRead;
-    private String stringReadSixTuple;
     private Boolean start = Boolean.FALSE;
+    // [Ian] add a flag to check if a connection is already there
+    private static boolean isConnectionExist = false;
+
 
 
     //private EditText mOutEditText;
@@ -409,7 +400,8 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         currentFood1TempTextView = (TextView) view.findViewById(R.id.textView_food1temp);
         currentFood2TempTextView = (TextView) view.findViewById(R.id.textView_food2temp);
         currentGrillTempTextView = (TextView) view.findViewById(R.id.textView_currentGrillTemp);
-        currentStatusTextView = (TextView) view.findViewById(R.id.textView_currentStatus);
+        currentConnectionStatusTextView = (TextView) view.findViewById(R.id.textView_connectionStatus);
+        currentModeStatusTextView = (TextView) view.findViewById(R.id.textView_modeStatus);
         currentTimerStatusTextView = (TextView) view.findViewById(R.id.textView_timerStatus);
         targetGrillTempTextView = (TextView) view.findViewById(R.id.textView_targetTemp);
 
@@ -417,6 +409,24 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
             @Override
             public void onClick(View v) {
                 showTimerDialog();
+            }
+        });
+
+        targetTempSetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isConnectionExist){
+                    // Set Temp Dialog
+                    String TitleMessage = "Set Temperature [Standard Mode]";
+                    int MinTemp = 200;
+                    int MaxTemp = 500;
+                    int IncrementalStep = 10;
+                    String ModeCode = "000";
+
+                    showTemperatureDialog(TitleMessage, MinTemp, MaxTemp, IncrementalStep, ModeCode);
+                } else
+                    Toast.makeText(getActivity(), "Please connect with a BBQube device first", Toast.LENGTH_SHORT).show();
+
             }
         });
 
@@ -610,6 +620,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
                             // [Ian] reset the flag so the user can connect again
                             isConnectionExist = false;
+                            resetUIDisplayWhenDisconnect();
 
                             break;
                     }
@@ -637,10 +648,12 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                             // [Ian] there was a bug in the previous code
                             // [Ian] added a new deliminator mark $$$
                             if (stringRead.endsWith("$$$")){
-                                Log.i(TAG, "new read message: "+ stringRead);
+                                //Log.i(TAG, "new read message: "+ stringRead);
 
                                 String[] arr = stringRead.split(":::", 6);
-                                if (arr.length == 6) {
+                                // need to add more criterias to filter out noise points
+                                if ((arr.length == 6) && (arr[5].contains(":") == false) && (arr[4].contains("$") == false) ) {
+                                    Log.i(TAG, "new read message: (after selection criteria) "+ stringRead);
                                     //Log.e(TAG, arr[0]);
                                     //Log.e(TAG, arr[1]);
                                     //Log.e(TAG, arr[2]);
@@ -653,6 +666,39 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                                     String timeTemp = arr[0];
                                     timeTemp = timeTemp.substring(timeTemp.lastIndexOf("e") + 1);
                                     arr[0] = timeTemp;
+
+                                    // display the temperatures on UI
+                                    // if the temp is -459, then it means the sensor is not plugged in
+                                    if (arr[1].equals("-459")){
+                                        currentGrillTempTextView.setText("Sensor NOT plugged in");
+                                        currentGrillTempTextView.setTextColor(Color.MAGENTA);
+                                    } else{
+                                        currentGrillTempTextView.setText(arr[1] +  (char) 0x00B0 + "F");
+                                        currentGrillTempTextView.setTextColor(Color.GREEN);
+                                    }
+                                    if (arr[2].equals("-459")){
+                                        currentFood1TempTextView.setText("Sensor NOT plugged in");
+                                        currentFood1TempTextView.setTextColor(Color.MAGENTA);
+                                    } else{
+                                        currentFood1TempTextView.setText(arr[2] + (char) 0x00B0 + "F");
+                                        currentFood1TempTextView.setTextColor(Color.GREEN);
+                                    }
+                                    if (arr[3].equals("-459")){
+                                        currentFood2TempTextView.setText("Sensor NOT plugged in");
+                                        currentFood2TempTextView.setTextColor(Color.MAGENTA);
+                                    } else{
+                                        currentFood2TempTextView.setText(arr[3] + (char) 0x00B0 + "F");
+                                        currentFood2TempTextView.setTextColor(Color.GREEN);
+                                    }
+
+                                    //[Ian] update the mode status in UI status
+                                    String modeStatus = arr[5];
+                                    int iEnd = modeStatus.indexOf("$$$"); //this finds the first occurrence of "$$$"
+                                    if (iEnd != -1) {
+                                        String subStringModeStatus = modeStatus.substring(0 ,iEnd);
+                                        currentModeStatusTextView.setText("Mode: " + subStringModeStatus);
+                                        currentModeStatusTextView.setTextColor(Color.GREEN);
+                                    }
 
                                     if (start) {
                                         addEntry(arr);
@@ -679,14 +725,19 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                     mConnectedDeviceName = msg.getData().getString(Constants.DEVICE_NAME);
                     if (null != activity) {
                         Toast.makeText(activity, "Connected to " + mConnectedDeviceName + " Successfully", Toast.LENGTH_LONG).show();
-                        currentStatusTextView.setText(mConnectedDeviceName + "\n" + "Connected");
-                        currentStatusTextView.setTextColor(Color.GREEN);
+                        currentConnectionStatusTextView.setText(mConnectedDeviceName + "\n" + "Connected");
+                        currentConnectionStatusTextView.setTextColor(Color.GREEN);
                     }
                     break;
 
 
                 case Constants.MESSAGE_TOAST:
                     if (null != activity) {
+                        //[Ian] if the message is to tell the device is disconnected (mainly because BBQube device is powered off), then reset the APP status as well
+                        if (msg.getData().getString(Constants.TOAST).equals("Device connection was terminated")){
+                            isConnectionExist = false;
+                            resetUIDisplayWhenDisconnect();
+                        }
                         Toast.makeText(activity, msg.getData().getString(Constants.TOAST),
                                 Toast.LENGTH_SHORT).show();
                     }
@@ -800,8 +851,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                         // set the flag and update status textview in UI
                         isConnectionExist = false;
                         mBluetoothService = null;
-                        currentStatusTextView.setText("Device Not Connected");
-                        currentStatusTextView.setTextColor(Color.RED);
+                        resetUIDisplayWhenDisconnect();
                         Toast.makeText(getActivity(), "Terminating current connection...", Toast.LENGTH_SHORT).show();
                         Log.d(TAG, "stopped current connection");
 
@@ -816,57 +866,84 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
 
             case R.id.monitor_start: {
-                // Set Temp
-                String TitleMessage = "Set Temperature [Standard Mode]";
-                int MinTemp = 200;
-                int MaxTemp = 500;
-                int IncrementalStep = 10;
-                String ModeCode = "000";
+                if (isConnectionExist){
+                    // Set Temp
+                    String TitleMessage = "Set Temperature [Standard Mode]";
+                    int MinTemp = 200;
+                    int MaxTemp = 500;
+                    int IncrementalStep = 10;
+                    String ModeCode = "000";
 
-                showTemperatureDialog(TitleMessage, MinTemp, MaxTemp, IncrementalStep, ModeCode);
-                // note: sendMessage() and Start will be called within showTemperatureDialog() through onSetTemperatureDialog() interface which is returned from TemperatureDialog
+                    showTemperatureDialog(TitleMessage, MinTemp, MaxTemp, IncrementalStep, ModeCode);
+                    // note: sendMessage() will be called within showTemperatureDialog() through onSetTemperatureDialog() interface which is returned from TemperatureDialog
+                } else{
+                    // not connected with BBQube yet
+                    Toast.makeText(getActivity(), "Please connect with a BBQube device first", Toast.LENGTH_SHORT).show();
+                }
+
                 return true;
             }
             case R.id.monitor_cs: {
-                // Cold Smoke
-                sendMessage("999");
-                start = Boolean.TRUE;
+                if (isConnectionExist){
+                    // Cold Smoke
+                    sendMessage("999");
+                    start = Boolean.TRUE;
+                } else
+                    Toast.makeText(getActivity(), "Please connect with a BBQube device first", Toast.LENGTH_SHORT).show();
+
                 return true;
             }
             case R.id.sous_vide: {
-                // Sous Vide
-                String TitleMessage = "Set Temperature [Sous Vide]";
-                int MinTemp = 100;
-                int MaxTemp = 210;
-                int IncrementalStep = 5;
-                String ModeCode = "666";
+                if (isConnectionExist){
+                    // Sous Vide
+                    String TitleMessage = "Set Temperature [Sous Vide]";
+                    int MinTemp = 100;
+                    int MaxTemp = 210;
+                    int IncrementalStep = 5;
+                    String ModeCode = "666";
 
-                showTemperatureDialog(TitleMessage, MinTemp, MaxTemp, IncrementalStep, ModeCode);
-                // note: sendMessage() and Start will be called within showTemperatureDialog() through onSetTemperatureDialog() interface which is returned from TemperatureDialog
+                    showTemperatureDialog(TitleMessage, MinTemp, MaxTemp, IncrementalStep, ModeCode);
+                    // note: sendMessage()  will be called within showTemperatureDialog() through onSetTemperatureDialog() interface which is returned from TemperatureDialog
+                } else
+                    Toast.makeText(getActivity(), "Please connect with a BBQube device first", Toast.LENGTH_SHORT).show();
+
                 return true;
             }
             case R.id.electrical_smoke: {
-                // Electrical Smoke
-                String TitleMessage = "Set Temperature [Electrical Smoke]";
-                int MinTemp = 200;
-                int MaxTemp = 500;
-                int IncrementalStep = 10;
-                String ModeCode = "555";
+                if (isConnectionExist){
+                    // Electrical Smoke
+                    String TitleMessage = "Set Temperature [Electrical Smoke]";
+                    int MinTemp = 200;
+                    int MaxTemp = 500;
+                    int IncrementalStep = 10;
+                    String ModeCode = "555";
 
-                showTemperatureDialog(TitleMessage, MinTemp, MaxTemp, IncrementalStep, ModeCode);
-                // note: sendMessage() and Start will be called within showTemperatureDialog() through onSetTemperatureDialog() interface which is returned from TemperatureDialog
+                    showTemperatureDialog(TitleMessage, MinTemp, MaxTemp, IncrementalStep, ModeCode);
+                    // note: sendMessage() will be called within showTemperatureDialog() through onSetTemperatureDialog() interface which is returned from TemperatureDialog
+                } else
+                    Toast.makeText(getActivity(), "Please connect with a BBQube device first", Toast.LENGTH_SHORT).show();
+
                 return true;
             }
             case R.id.monitor_mf: {
-                // Max Fan Power
-                sendMessage("888");
-                start = Boolean.TRUE;
+                if (isConnectionExist){
+                    // Max Fan Power
+                    sendMessage("888");
+                    start = Boolean.TRUE;
+                } else
+                    Toast.makeText(getActivity(), "Please connect with a BBQube device first", Toast.LENGTH_SHORT).show();
+
                 return true;
             }
             case R.id.monitor_stop: {
-                // stop
-                sendMessage("777");
-                start = Boolean.FALSE;
+                if (isConnectionExist){
+                    // stop
+                    sendMessage("777");
+                    start = Boolean.FALSE;
+                    targetGrillTempTextView.setText("Stopped");
+                    targetGrillTempTextView.setTextColor(Color.RED);
+                } else
+                    Toast.makeText(getActivity(), "Please connect with a BBQube device first", Toast.LENGTH_SHORT).show();
                 return true;
             }
         }
@@ -978,14 +1055,24 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
     public void onSetTemperatureDialog(String temp) {
         // [Ian] fixed the bug of keep setting 225
         // depending on the length of the temp string, only take the last 3 chars out and display in the Toast (since only the last 3 digits are actual temp)
-        if (temp.length() <= 3)
+        if (temp.length() <= 3){
             Toast.makeText(getActivity(),"The temperature setting value is: " + temp, Toast.LENGTH_SHORT).show();
+            // also update the UI target temp display
+            targetGrillTempTextView.setText( temp + (char) 0x00B0 + "F");
+            targetGrillTempTextView.setTextColor(Color.GREEN);
+        }
+
         else{
-            Toast.makeText(getActivity(),"The temperature setting value is: " + temp.substring(temp.length() - 3), Toast.LENGTH_SHORT).show();
+            String modTemp = temp.substring(temp.length() - 3);
+            Toast.makeText(getActivity(),"The temperature setting value is: " + modTemp, Toast.LENGTH_SHORT).show();
+            // also update the UI target temp display
+            targetGrillTempTextView.setText( modTemp + (char) 0x00B0 + "F");
+            targetGrillTempTextView.setTextColor(Color.GREEN);
         }
 
         Log.d(TAG, "temp set is: "  + temp);
         sendMessage(temp);
+
         start = Boolean.TRUE;
     }
 
@@ -1019,6 +1106,24 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
             timerSetButton.setText("View Current Timer");
         };
 
+    }
+
+    // define a method to reset all UI interface displays
+    public void resetUIDisplayWhenDisconnect(){
+        currentFood1TempTextView.setText("Device Not Connected");
+        currentFood1TempTextView.setTextColor(Color.GRAY);
+
+        currentFood2TempTextView.setText("Device Not Connected");
+        currentFood2TempTextView.setTextColor(Color.GRAY);
+
+        currentGrillTempTextView.setText("Device Not Connected");
+        currentGrillTempTextView.setTextColor(Color.GRAY);
+
+        currentModeStatusTextView.setText("No Mode Selected");
+        currentModeStatusTextView.setTextColor(Color.RED);
+
+        currentConnectionStatusTextView.setText("Device Not Connected");
+        currentConnectionStatusTextView.setTextColor(Color.RED);
     }
 
 }

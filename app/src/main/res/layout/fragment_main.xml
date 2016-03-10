@@ -20,32 +20,33 @@
         android:text="Food 1 Temperature"
         android:id="@+id/textView"
         android:layout_below="@+id/chart1"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:textColor="#000000" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Food 2 Temperature"
         android:id="@+id/textView2"
+        android:textColor="#000000"
         android:layout_below="@+id/chart1"
         android:layout_alignParentEnd="true" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Current Temp "
+        android:text="Device Not Connected"
         android:id="@+id/textView_food1temp"
         android:layout_below="@+id/textView"
         android:layout_alignParentStart="true"
-        android:layout_alignEnd="@+id/textView" />
+        android:layout_alignEnd="@+id/button_setTemp" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Current Temp "
+        android:text="Device Not Connected"
         android:id="@+id/textView_food2temp"
-        android:layout_below="@+id/textView2"
-        android:layout_alignStart="@+id/textView2"
+        android:layout_above="@+id/textView3"
         android:layout_alignParentEnd="true" />
 
     <TextView
@@ -55,12 +56,13 @@
         android:id="@+id/textView3"
         android:layout_marginTop="34dp"
         android:layout_below="@+id/textView_food1temp"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:textColor="#000000" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Target Temp"
+        android:text="No Target Temp is Set"
         android:id="@+id/textView_targetTemp"
         android:layout_below="@+id/textView3"
         android:layout_alignParentStart="true" />
@@ -79,17 +81,18 @@
         android:layout_height="wrap_content"
         android:text="Current Status"
         android:id="@+id/textView5"
-        android:layout_above="@+id/button_setTimer"
-        android:layout_alignStart="@+id/textView_currentGrillTemp" />
+        android:textColor="#000000"
+        android:layout_alignBottom="@+id/button_setTemp"
+        android:layout_alignEnd="@+id/textView_connectionStatus" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Device Not Connected "
-        android:id="@+id/textView_currentStatus"
+        android:id="@+id/textView_connectionStatus"
         android:textColor="#ff0000"
         android:layout_below="@+id/textView5"
-        android:layout_alignEnd="@+id/textView_food2temp" />
+        android:layout_alignParentEnd="true" />
 
     <Button
         style="?android:attr/buttonStyleSmall"
@@ -107,16 +110,17 @@
         android:layout_height="wrap_content"
         android:text="Current Grill Temp"
         android:id="@+id/textView4"
+        android:textColor="#000000"
         android:layout_alignTop="@+id/textView3"
-        android:layout_alignStart="@+id/textView_currentGrillTemp" />
+        android:layout_alignParentEnd="true" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Current Temp"
+        android:text="Device Not Connected"
         android:id="@+id/textView_currentGrillTemp"
         android:layout_below="@+id/textView4"
-        android:layout_alignStart="@+id/textView_food2temp" />
+        android:layout_alignParentEnd="true" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -124,7 +128,16 @@
         android:text="No Timer is Set"
         android:id="@+id/textView_timerStatus"
         android:textColor="#ff0000"
-        android:layout_below="@+id/textView_currentStatus"
+        android:layout_below="@+id/textView_modeStatus"
+        android:layout_alignEnd="@+id/textView_modeStatus" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No Mode Selected"
+        android:id="@+id/textView_modeStatus"
+        android:textColor="#ff0000"
+        android:layout_below="@+id/textView_connectionStatus"
         android:layout_alignParentEnd="true" />
 
     <!--<ListView-->
