@@ -100,10 +100,8 @@
         android:layout_height="wrap_content"
         android:text="Set New Timer"
         android:id="@+id/button_setTimer"
-        android:layout_marginBottom="18dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignEnd="@+id/button_setTemp" />
+        android:layout_alignTop="@+id/textView_modeStatus"
+        android:layout_alignParentStart="true" />
 
     <TextView
         android:layout_width="wrap_content"
