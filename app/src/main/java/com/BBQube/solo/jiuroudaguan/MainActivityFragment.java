@@ -178,8 +178,8 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                     Log.d(TAG, "Pairing in process, need to dismiss the dialog ");
                     Toast.makeText(getActivity(), "Pairing in process, please ignore system PIN request dialog", Toast.LENGTH_SHORT).show();
 
-
                 }else if (state == BluetoothDevice.BOND_BONDED && prevState == BluetoothDevice.BOND_BONDING) {
+                    // paired situation
                     Toast.makeText(getActivity(), "Just Successfully Paired " + device.getName() + ", Now Click It To Connect", Toast.LENGTH_LONG).show();
                     Log.d(TAG, "New Device Just Paired ");
 
@@ -190,7 +190,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                     Log.d(TAG, "Now directly go to DeviceListActivity to Request_CONNECY_DEVICE_SECURE");
                     Intent serverIntent = new Intent(getActivity(), DeviceListActivity.class);
                     startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_SECURE);
-                    //*/
+                    //*/unregisterReceiver
                     /*
                     // [Ian] Way 2: Alternatively we can directly start connect process without going back to REQUEST_CONNECT_DEVICE_SECURE list
                     Log.d(TAG, "Now directly start try to connectDevice in secure mode");
@@ -227,6 +227,24 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
         }
     };
+
+    // [Ian] 03/12/2016
+    // added a new broadcast receiver for receiving message back from AlarmReceiver class when the alarm (timer) time is up
+    private final BroadcastReceiver mAlarmFeedbackReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("TimeIsUp")){
+                // time is up, reset the UI and target temperature flag
+                Log.d(TAG, "Alarm Receiver sends back a message when time is up");
+                currentTimerStatusTextView.setText("Time is Up");
+                currentTimerStatusTextView.setTextColor(Color.MAGENTA);
+                timerSetButton.setText("Set New Timer");
+                // reset the flag, so next time when we open the TimerDialog, it shows a new UI
+                AlarmTargetTimeMilliSec = 1111;
+            }
+        }
+    };
+    // end [Ian] 03/12/2016
 
 
     // chart things
@@ -338,6 +356,12 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         // [Ian] register for broadcast when a new device finished pairing, since its Bond State Changed
         filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         getActivity().registerReceiver(mPairingReceiver, filter);
+
+        // [Ian] 03/12/2016
+        // register another broadcast receiver to receive the message back from AlarmReceiver when the system alarm (timer) goes off
+        IntentFilter filter2 = new IntentFilter("TimeIsUp");
+        getActivity().registerReceiver(mAlarmFeedbackReceiver, filter2);
+        // [Ian] end 03/12/2016
     }
 
     @Override
@@ -358,11 +382,13 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.i(TAG, "MainActivityFragment onDestroy()");
         if (mBluetoothService != null) {
             mBluetoothService.stop();
         }
         //[Ian] unregister the two Pairing related Receivers that I added into this Fragment
         getActivity().unregisterReceiver(mPairingReceiver);
+        getActivity().unregisterReceiver(mAlarmFeedbackReceiver);
     }
 
     @Override

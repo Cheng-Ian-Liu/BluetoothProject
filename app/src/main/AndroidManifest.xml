@@ -28,10 +28,6 @@
             android:label="@string/select_device"
             android:theme="@android:style/Theme.Holo.Dialog" />
         <activity
-            android:name=".Main2Activity"
-            android:label="@string/title_activity_main2"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity
             android:name=".RealtimeLineChartActivity"
             android:label="@string/title_activity_realtimelinechart"
             android:theme="@style/AppTheme.NoActionBar"></activity>
