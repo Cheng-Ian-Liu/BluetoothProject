@@ -271,14 +271,26 @@ public class BluetoothService {
      */
     private void connectionLost() {
         // Send a failure message back to the Activity
+        Log.d(TAG, "ConnectionLost() method is called while the current BluetoothAdapter state is: " + mAdapter.getState());
         Message msg = mHandler.obtainMessage(Constants.MESSAGE_TOAST);
         Bundle bundle = new Bundle();
-        bundle.putString(Constants.TOAST, "Device connection was terminated");
-        msg.setData(bundle);
-        mHandler.sendMessage(msg);
 
-        // Start the service over to restart listening mode
-        BluetoothService.this.start();
+        //[Ian] check to see if it is because the bluetooth adapter is turned off by user for god knows reason
+        if (mAdapter.getState() == BluetoothAdapter.STATE_OFF || mAdapter.getState() == BluetoothAdapter.STATE_TURNING_OFF){
+            // if user turns bluetooth adapter off,  let the UI know
+            bundle.putString(Constants.TOAST, "BBQube device connection was terminated because Bluetooth is turned off");
+            msg.setData(bundle);
+            mHandler.sendMessage(msg);
+            // also we need to gracefully stop the BluetoothService and also reset the mState == STATE_NONE (done within stop())
+            stop();
+        } else {
+            // [Ian] let UI know somehow the connection is lost
+            bundle.putString(Constants.TOAST, "BBQube connection was terminated");
+            msg.setData(bundle);
+            mHandler.sendMessage(msg);
+            // Start the service over to restart listening mode
+            BluetoothService.this.start();
+        }
     }
 
     /**
@@ -496,7 +508,7 @@ public class BluetoothService {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
                     // Start the service over to restart listening mode
-                    BluetoothService.this.start();
+                    //BluetoothService.this.start();
                     break;
                 }
             }
