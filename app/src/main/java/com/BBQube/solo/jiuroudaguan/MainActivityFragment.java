@@ -155,8 +155,6 @@ class ByteQueue {
 public class MainActivityFragment extends Fragment implements OnChartValueSelectedListener, TemperatureDialog.TemperatureDialogListener, TimerDialog.TimerDialogListener{
 
 
-
-
     // [Ian] add a flag to check if an Alarm is being set, and also a public long integer to store the value of target Alarm time
     public static boolean isAlarmExist = false;
     public static long AlarmTargetTimeMilliSec = 0000;
@@ -249,9 +247,6 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
     // chart things
     private LineChart mChart;
-    protected String[] mMonths = new String[] {
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"
-    };
 
     // [Ian] lower half buttons and textviews
     private Button timerSetButton;
@@ -462,7 +457,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
         // no description text
         mChart.setDescription("");
-        mChart.setNoDataTextDescription("Select a cooking mode to get started");
+        mChart.setNoDataTextDescription("Connect a BBQube device to get started");
 
         // enable touch gestures
         mChart.setTouchEnabled(true);
@@ -476,10 +471,10 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         mChart.setPinchZoom(true);
 
         // set an alternative background color
-        mChart.setBackgroundColor(Color.LTGRAY);
+        mChart.setBackgroundColor(Color.WHITE);
 
         LineData data = new LineData();
-        data.setValueTextColor(Color.WHITE);
+        data.setValueTextColor(Color.RED);
 
         // add empty data
         mChart.setData(data);
@@ -490,14 +485,14 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
         Legend l = mChart.getLegend();
 
         // modify the legend ...
-        // l.setPosition(LegendPosition.LEFT_OF_CHART);
+        l.setPosition(Legend.LegendPosition.RIGHT_OF_CHART_INSIDE);
         l.setForm(LegendForm.LINE);
         //l.setTypeface(tf);
-        l.setTextColor(Color.WHITE);
+        l.setTextColor(Color.BLACK);
 
         XAxis xl = mChart.getXAxis();
         //xl.setTypeface(tf);
-        xl.setTextColor(Color.WHITE);
+        xl.setTextColor(Color.BLACK);
         xl.setDrawGridLines(false);
         xl.setAvoidFirstLastClipping(true);
         xl.setSpaceBetweenLabels(5);
@@ -505,7 +500,7 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
         YAxis leftAxis = mChart.getAxisLeft();
         //leftAxis.setTypeface(tf);
-        leftAxis.setTextColor(Color.WHITE);
+        leftAxis.setTextColor(Color.BLACK);
         leftAxis.setAxisMaxValue(700f);
         leftAxis.setAxisMinValue(0f);
         leftAxis.setStartAtZero(true);
@@ -696,23 +691,29 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                                     // display the temperatures on UI
                                     // if the temp is -459, then it means the sensor is not plugged in
                                     if (arr[1].equals("-459")){
+                                        currentGrillTempTextView.setTextSize(14);
                                         currentGrillTempTextView.setText("Sensor NOT plugged in");
                                         currentGrillTempTextView.setTextColor(Color.MAGENTA);
                                     } else{
+                                        currentGrillTempTextView.setTextSize(25);
                                         currentGrillTempTextView.setText(arr[1] +  (char) 0x00B0 + "F");
                                         currentGrillTempTextView.setTextColor(Color.GREEN);
                                     }
                                     if (arr[2].equals("-459")){
+                                        currentFood1TempTextView.setTextSize(14);
                                         currentFood1TempTextView.setText("Sensor NOT plugged in");
                                         currentFood1TempTextView.setTextColor(Color.MAGENTA);
                                     } else{
+                                        currentFood1TempTextView.setTextSize(25);
                                         currentFood1TempTextView.setText(arr[2] + (char) 0x00B0 + "F");
                                         currentFood1TempTextView.setTextColor(Color.GREEN);
                                     }
                                     if (arr[3].equals("-459")){
+                                        currentFood2TempTextView.setTextSize(14);
                                         currentFood2TempTextView.setText("Sensor NOT plugged in");
                                         currentFood2TempTextView.setTextColor(Color.MAGENTA);
                                     } else{
+                                        currentFood2TempTextView.setTextSize(25);
                                         currentFood2TempTextView.setText(arr[3] + (char) 0x00B0 + "F");
                                         currentFood2TempTextView.setTextColor(Color.GREEN);
                                     }
@@ -721,14 +722,18 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
                                     String modeStatus = arr[5];
                                     int iEnd = modeStatus.indexOf("$$$"); //this finds the first occurrence of "$$$"
                                     if (iEnd != -1) {
+                                        // if we can find a $$$ in the string, then the letters before it is the current mode, then display it on UI
                                         String subStringModeStatus = modeStatus.substring(0 ,iEnd);
                                         currentModeStatusTextView.setText("Status: " + subStringModeStatus);
                                         currentModeStatusTextView.setTextColor(Color.GREEN);
                                     }
 
-                                    if (start) {
-                                        addEntry(arr);
-                                    }
+                                    // based on XiaoMao's suggestion, we will start plotting immediately after we get connected
+                                    //if (start) {
+                                        //addEntry(arr);
+                                    //}
+
+                                    addEntry(arr);
                                 }
                                 stringRead = "";
                             }
@@ -986,7 +991,6 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 //        overridePendingTransition(R.anim.move_left_in_activity, R.anim.move_right_out_activity);
 //    }
 
-    private int year = 2016;
 
     private void addEntry(String[] arr) {
 
@@ -1024,11 +1028,11 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
             mChart.notifyDataSetChanged();
 
             // limit the number of visible entries
-            mChart.setVisibleXRangeMaximum(120);
+            mChart.setVisibleXRangeMaximum(60);
             // mChart.setVisibleYRange(30, AxisDependency.LEFT);
 
             // move to the latest entry
-            mChart.moveViewToX(data.getXValCount() - 121);
+            mChart.moveViewToX(data.getXValCount() - 61);
 
             // this automatically refreshes the chart (calls invalidate())
             // mChart.moveViewTo(data.getXValCount()-7, 55f,
@@ -1040,12 +1044,13 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
         LineDataSet set = new LineDataSet(null, "Real-Time Grill Temperature");
         set.setAxisDependency(AxisDependency.LEFT);
-        set.setColor(ColorTemplate.getHoloBlue());
-        set.setCircleColor(Color.WHITE);
+        set.setColor(Color.BLACK);
+        set.setDrawCircles(false);
+        //set.setCircleColor(Color.BLACK);
         set.setLineWidth(2f);
-        set.setCircleSize(4f);
+        //set.setCircleSize(2f);
         set.setFillAlpha(65);
-        set.setFillColor(ColorTemplate.getHoloBlue());
+        set.setFillColor(Color.BLACK);
         set.setHighLightColor(Color.rgb(244, 117, 117));
         set.setValueTextColor(Color.WHITE);
         set.setValueTextSize(9f);
@@ -1139,12 +1144,15 @@ public class MainActivityFragment extends Fragment implements OnChartValueSelect
 
     // define a method to reset all UI interface displays
     public void resetUIDisplayWhenDisconnect(){
+        currentFood1TempTextView.setTextSize(14);
         currentFood1TempTextView.setText("Device Not Connected");
         currentFood1TempTextView.setTextColor(Color.GRAY);
 
+        currentFood2TempTextView.setTextSize(14);
         currentFood2TempTextView.setText("Device Not Connected");
         currentFood2TempTextView.setTextColor(Color.GRAY);
 
+        currentGrillTempTextView.setTextSize(14);
         currentGrillTempTextView.setText("Device Not Connected");
         currentGrillTempTextView.setTextColor(Color.GRAY);
 
